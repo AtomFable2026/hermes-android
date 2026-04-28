@@ -26,7 +26,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "aetheris_database"
         )
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            .fallbackToDestructiveMigration()
             .build()
     }
 

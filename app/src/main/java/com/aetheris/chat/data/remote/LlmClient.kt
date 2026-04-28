@@ -98,7 +98,7 @@ class LlmClient @Inject constructor(
                         eventType = null
                     }
 
-                    var line: String?
+                    var line: String? = null
                     while (!done && reader.readLine().also { line = it } != null) {
                         val l = line ?: continue
                         when {

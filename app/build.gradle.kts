@@ -20,9 +20,24 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+
+        register("preview") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".preview"
+            versionNameSuffix = "-preview"
+            signingConfig = signingConfigs.getByName("debug")
+            buildConfigField("boolean", "IS_PREVIEW", "true")
+            matchingFallbacks.add("release")
+        }
+
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            buildConfigField("boolean", "IS_PREVIEW", "false")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

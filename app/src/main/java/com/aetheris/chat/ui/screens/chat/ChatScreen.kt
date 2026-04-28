@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.aetheris.chat.BuildConfig
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aetheris.chat.ui.components.*
@@ -60,7 +61,24 @@ fun ChatScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            Column {
+                if (BuildConfig.IS_PREVIEW) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "PREVIEW VERSION - NOT FOR PRODUCTION",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier
+                                .padding(vertical = 2.dp)
+                                .fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                }
+                TopAppBar(
                 title = {
                     ModelSelector(
                         providers = uiState.availableProviders,

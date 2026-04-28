@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <!-- Encrypted API keys and chat history must never leave the device. -->
+    <cloud-backup>
+        <exclude domain="sharedpref" path="aetheris_secure_prefs.xml" />
+        <exclude domain="database" path="aetheris_database" />
+        <exclude domain="file" path="datastore/aetheris_settings.preferences_pb" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="aetheris_secure_prefs.xml" />
+        <exclude domain="database" path="aetheris_database" />
+        <exclude domain="file" path="datastore/aetheris_settings.preferences_pb" />
+    </device-transfer>
+</data-extraction-rules>

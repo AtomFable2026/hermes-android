@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Star/sparkle symbol for Aetheris -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,28 L57.5,45.5 L75,49 L57.5,52.5 L54,70 L50.5,52.5 L33,49 L50.5,45.5 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"/>
+
+    <!-- Smaller sparkle top-right -->
+    <path
+        android:fillColor="#A78BFA"
+        android:pathData="M70,30 L71.5,35.5 L77,37 L71.5,38.5 L70,44 L68.5,38.5 L63,37 L68.5,35.5 Z"/>
+
+    <!-- Smaller sparkle bottom-left -->
+    <path
+        android:fillColor="#22D3EE"
+        android:pathData="M38,58 L39.5,63.5 L45,65 L39.5,66.5 L38,72 L36.5,66.5 L31,65 L36.5,63.5 Z"/>
+</vector>

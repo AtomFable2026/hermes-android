@@ -1,0 +1,26 @@
+# Gradle / build
+.gradle/
+build/
+**/build/
+.kotlin/
+out/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+local.properties
+
+# Android
+*.apk
+*.ap_
+*.dex
+*.class
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Misc
+.DS_Store
+Thumbs.db

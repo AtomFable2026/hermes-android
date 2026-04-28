@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">Aetheris AI</string>
+    <string name="app_tagline">Your Intelligent Companion</string>
+
+    <!-- Navigation -->
+    <string name="nav_chats">Chats</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Chat Screen -->
+    <string name="chat_input_hint">Message Aetheris…</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_new">New Chat</string>
+    <string name="chat_delete">Delete Chat</string>
+    <string name="chat_empty_title">Start a Conversation</string>
+    <string name="chat_empty_subtitle">Ask anything — Aetheris is ready to help.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_providers">AI Providers</string>
+    <string name="settings_api_key">API Key</string>
+    <string name="settings_api_key_hint">Enter your API key</string>
+    <string name="settings_base_url">Base URL</string>
+    <string name="settings_model">Default Model</string>
+    <string name="settings_system_prompt">System Prompt</string>
+    <string name="settings_system_prompt_hint">You are a helpful assistant.</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_streaming">Enable Streaming</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="settings_about">About Aetheris AI</string>
+    <string name="settings_version">Version %s</string>
+
+    <!-- Providers -->
+    <string name="provider_openai">OpenAI</string>
+    <string name="provider_anthropic">Anthropic</string>
+    <string name="provider_groq">Groq</string>
+    <string name="provider_openrouter">OpenRouter</string>
+    <string name="provider_custom">Custom</string>
+
+    <!-- Errors -->
+    <string name="error_no_api_key">Please add your API key in Settings</string>
+    <string name="error_network">Network error. Check your connection.</string>
+    <string name="error_api">API error: %s</string>
+    <string name="error_rate_limit">Rate limit reached. Please wait.</string>
+    <string name="error_unknown">Something went wrong. Please try again.</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_delete_title">Delete Conversation?</string>
+    <string name="dialog_delete_message">This action cannot be undone.</string>
+    <string name="dialog_confirm">Confirm</string>
+    <string name="dialog_cancel">Cancel</string>
+</resources>

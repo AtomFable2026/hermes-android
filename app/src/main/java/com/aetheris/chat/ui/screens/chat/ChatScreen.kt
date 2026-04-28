@@ -79,38 +79,39 @@ fun ChatScreen(
                     }
                 }
                 TopAppBar(
-                title = {
-                    ModelSelector(
-                        providers = uiState.availableProviders,
-                        selectedProviderId = uiState.selectedProviderId,
-                        selectedModelId = uiState.selectedModelId,
-                        onProviderSelected = viewModel::onProviderSelected,
-                        onModelSelected = viewModel::onModelSelected,
-                        onRefreshModels = viewModel::refreshModels,
-                        isRefreshing = uiState.isRefreshingModels
+                    title = {
+                        ModelSelector(
+                            providers = uiState.availableProviders,
+                            selectedProviderId = uiState.selectedProviderId,
+                            selectedModelId = uiState.selectedModelId,
+                            onProviderSelected = viewModel::onProviderSelected,
+                            onModelSelected = viewModel::onModelSelected,
+                            onRefreshModels = viewModel::refreshModels,
+                            isRefreshing = uiState.isRefreshingModels
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = viewModel::newChat) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "New Chat",
+                                tint = AetherisPrimary
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = viewModel::newChat) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "New Chat",
-                            tint = AetherisPrimary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
                 )
-            )
+            }
         },
         bottomBar = {
             MessageInput(

@@ -91,7 +91,7 @@ object DefaultProviders {
 
     val custom = Provider(
         id = "custom",
-        name = "Custom (OpenAI Compatible)",
+        name = "Custom (legacy)",
         type = ProviderType.OPENAI_COMPATIBLE,
         baseUrl = "",
         models = listOf(
@@ -99,5 +99,23 @@ object DefaultProviders {
         )
     )
 
+    /** Includes the legacy "custom" placeholder for backwards compat in older callers. */
     val allProviders = listOf(openAI, anthropic, groq, openRouter, custom)
+
+    /** Built-in providers excluding the legacy "custom" placeholder. */
+    val builtIn = listOf(openAI, anthropic, groq, openRouter)
+}
+
+/**
+ * Domain representation of a user-defined custom provider, mirroring
+ * [com.aetheris.chat.data.local.entity.CustomProviderEntity].
+ */
+data class CustomProvider(
+    val id: Long,
+    val name: String,
+    val baseUrl: String,
+    val type: ProviderType
+) {
+    /** Stable key used in encrypted prefs and the cached_models table. */
+    val providerKey: String get() = "custom:$id"
 }

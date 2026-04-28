@@ -49,6 +49,13 @@ fun ChatScreen(
             viewModel.clearError()
         }
     }
+    LaunchedEffect(uiState.info) {
+        val info = uiState.info
+        if (info != null) {
+            snackbarHostState.showSnackbar(info)
+            viewModel.clearInfo()
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -56,10 +63,13 @@ fun ChatScreen(
             TopAppBar(
                 title = {
                     ModelSelector(
+                        providers = uiState.availableProviders,
                         selectedProviderId = uiState.selectedProviderId,
                         selectedModelId = uiState.selectedModelId,
                         onProviderSelected = viewModel::onProviderSelected,
-                        onModelSelected = viewModel::onModelSelected
+                        onModelSelected = viewModel::onModelSelected,
+                        onRefreshModels = viewModel::refreshModels,
+                        isRefreshing = uiState.isRefreshingModels
                     )
                 },
                 navigationIcon = {

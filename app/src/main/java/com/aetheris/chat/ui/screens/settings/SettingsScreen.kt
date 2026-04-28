@@ -19,7 +19,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aetheris.chat.data.model.CustomProvider
 import com.aetheris.chat.data.model.DefaultProviders
+import com.aetheris.chat.data.model.Provider
+import com.aetheris.chat.data.model.ProviderType
 import com.aetheris.chat.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +40,16 @@ fun SettingsScreen(
             viewModel.clearSaveMessage()
         }
     }
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearErrorMessage()
+        }
+    }
+
+    var showAddCustom by remember { mutableStateOf(false) }
+    var editingProvider by remember { mutableStateOf<CustomProvider?>(null) }
+    var addingModelFor by remember { mutableStateOf<Provider?>(null) }
 
     Scaffold(
         topBar = {
@@ -67,51 +80,68 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // ── API Keys Section ──
-            SettingsSection(title = "🔑 API Keys") {
-                DefaultProviders.allProviders
-                    .filter { it.id != "custom" }
-                    .forEach { provider ->
-                        ApiKeyInput(
-                            providerName = provider.name,
-                            currentKey = uiState.apiKeys[provider.id] ?: "",
-                            onSave = { key -> viewModel.saveApiKey(provider.id, key) }
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+            // ── Built-in Providers ──
+            SettingsSection(title = "Built-in providers") {
+                DefaultProviders.builtIn.forEach { provider ->
+                    val merged = uiState.mergedProviders.find { it.id == provider.id } ?: provider
+                    ProviderCard(
+                        title = provider.name,
+                        subtitle = provider.baseUrl,
+                        models = merged.models.size,
+                        apiKey = uiState.apiKeys[provider.id] ?: "",
+                        isRefreshing = uiState.refreshingProviderId == provider.id,
+                        onSaveKey = { viewModel.saveApiKey(provider.id, it) },
+                        onDeleteKey = { viewModel.deleteApiKey(provider.id) },
+                        onRefresh = { viewModel.refreshModels(provider.id) },
+                        onAddModel = { addingModelFor = merged }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
 
-            // ── Custom Provider Section ──
-            SettingsSection(title = "🔧 Custom Provider") {
-                OutlinedTextField(
-                    value = uiState.customBaseUrl,
-                    onValueChange = viewModel::setCustomBaseUrl,
-                    label = { Text("Base URL") },
-                    placeholder = { Text("https://your-server.com/v1") },
+            // ── Custom Providers ──
+            SettingsSection(title = "Custom providers") {
+                if (uiState.customProviders.isEmpty()) {
+                    Text(
+                        text = "Add any OpenAI-compatible or Anthropic-compatible endpoint — Ollama, vLLM, LM Studio, your own gateway, etc.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                uiState.customProviders.forEach { custom ->
+                    val merged = uiState.mergedProviders.find { it.id == custom.providerKey }
+                    ProviderCard(
+                        title = custom.name,
+                        subtitle = custom.baseUrl.ifBlank { "(no base URL)" } + " · ${custom.type.displayName()}",
+                        models = merged?.models?.size ?: 0,
+                        apiKey = uiState.apiKeys[custom.providerKey] ?: "",
+                        isRefreshing = uiState.refreshingProviderId == custom.providerKey,
+                        onSaveKey = { viewModel.saveApiKey(custom.providerKey, it) },
+                        onDeleteKey = { viewModel.deleteApiKey(custom.providerKey) },
+                        onRefresh = { viewModel.refreshModels(custom.providerKey) },
+                        onAddModel = { merged?.let { addingModelFor = it } },
+                        onEdit = { editingProvider = custom },
+                        onDelete = { viewModel.deleteCustomProvider(custom.id) }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                Button(
+                    onClick = { showAddCustom = true },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = uiState.customModelId,
-                    onValueChange = viewModel::setCustomModelId,
-                    label = { Text("Model ID") },
-                    placeholder = { Text("gpt-4o or custom-model") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                ApiKeyInput(
-                    providerName = "Custom",
-                    currentKey = uiState.apiKeys["custom"] ?: "",
-                    onSave = { key -> viewModel.saveApiKey("custom", key) }
-                )
+                    colors = ButtonDefaults.buttonColors(containerColor = AetherisPrimary)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Add custom provider")
+                }
             }
 
             // ── Chat Settings ──
-            SettingsSection(title = "💬 Chat Settings") {
+            SettingsSection(title = "Chat") {
                 OutlinedTextField(
                     value = uiState.systemPrompt,
                     onValueChange = viewModel::setSystemPrompt,
@@ -124,34 +154,24 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Streaming toggle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            "Streaming Responses",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            "Show tokens as they arrive",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = uiState.streamingEnabled,
-                        onCheckedChange = viewModel::setStreamingEnabled,
-                        colors = SwitchDefaults.colors(checkedTrackColor = AetherisPrimary)
-                    )
-                }
+                ToggleRow(
+                    title = "Streaming responses",
+                    subtitle = "Show tokens as they arrive",
+                    checked = uiState.streamingEnabled,
+                    onCheckedChange = viewModel::setStreamingEnabled
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Temperature slider
+                ToggleRow(
+                    title = "Dark theme",
+                    subtitle = "Override the system setting",
+                    checked = uiState.darkMode,
+                    onCheckedChange = viewModel::setDarkMode
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Column {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -197,7 +217,6 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Max tokens
                 OutlinedTextField(
                     value = uiState.maxTokens.toString(),
                     onValueChange = { value ->
@@ -212,14 +231,14 @@ fun SettingsScreen(
             }
 
             // ── About ──
-            SettingsSection(title = "ℹ️ About") {
+            SettingsSection(title = "About") {
                 Text(
                     text = "Aetheris AI v1.0.0",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "Your intelligent companion powered by the world's best AI models. Supports OpenAI, Anthropic, Groq, OpenRouter, and custom OpenAI-compatible endpoints.",
+                    text = "Your intelligent companion powered by the world's best AI models. Supports OpenAI, Anthropic, Groq, OpenRouter, and any number of custom OpenAI- or Anthropic-compatible endpoints.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -227,6 +246,165 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+
+    if (showAddCustom) {
+        CustomProviderDialog(
+            initialName = "",
+            initialBaseUrl = "",
+            initialType = ProviderType.OPENAI_COMPATIBLE,
+            initialApiKey = "",
+            onDismiss = { showAddCustom = false },
+            onConfirm = { name, baseUrl, type, key ->
+                viewModel.addCustomProvider(name, baseUrl, type, key)
+                showAddCustom = false
+            }
+        )
+    }
+
+    editingProvider?.let { provider ->
+        CustomProviderDialog(
+            initialName = provider.name,
+            initialBaseUrl = provider.baseUrl,
+            initialType = provider.type,
+            initialApiKey = uiState.apiKeys[provider.providerKey] ?: "",
+            isEdit = true,
+            onDismiss = { editingProvider = null },
+            onConfirm = { name, baseUrl, type, key ->
+                viewModel.updateCustomProvider(provider.id, name, baseUrl, type)
+                if (key.isNotBlank()) viewModel.saveApiKey(provider.providerKey, key)
+                editingProvider = null
+            }
+        )
+    }
+
+    addingModelFor?.let { provider ->
+        AddModelDialog(
+            providerName = provider.name,
+            onDismiss = { addingModelFor = null },
+            onConfirm = { modelId, displayName ->
+                viewModel.addCustomModel(provider.id, modelId, displayName)
+                addingModelFor = null
+            }
+        )
+    }
+}
+
+private fun ProviderType.displayName(): String = when (this) {
+    ProviderType.OPENAI_COMPATIBLE -> "OpenAI compatible"
+    ProviderType.ANTHROPIC -> "Anthropic compatible"
+}
+
+@Composable
+private fun ProviderCard(
+    title: String,
+    subtitle: String,
+    models: Int,
+    apiKey: String,
+    isRefreshing: Boolean,
+    onSaveKey: (String) -> Unit,
+    onDeleteKey: () -> Unit,
+    onRefresh: () -> Unit,
+    onAddModel: () -> Unit,
+    onEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2
+                    )
+                    Text(
+                        text = "$models model${if (models == 1) "" else "s"} cached",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AetherisPrimary
+                    )
+                }
+                if (onEdit != null) {
+                    IconButton(onClick = onEdit) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    }
+                }
+                if (onDelete != null) {
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = ErrorRed)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            ApiKeyInput(
+                providerName = title,
+                currentKey = apiKey,
+                onSave = onSaveKey,
+                onClear = onDeleteKey
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = onRefresh,
+                    enabled = !isRefreshing,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (isRefreshing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = AetherisPrimary
+                        )
+                    } else {
+                        Icon(Icons.Default.Refresh, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Fetch models")
+                    }
+                }
+                OutlinedButton(
+                    onClick = onAddModel,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Add model")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ToggleRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(checkedTrackColor = AetherisPrimary)
+        )
     }
 }
 
@@ -260,7 +438,8 @@ private fun SettingsSection(
 private fun ApiKeyInput(
     providerName: String,
     currentKey: String,
-    onSave: (String) -> Unit
+    onSave: (String) -> Unit,
+    onClear: (() -> Unit)? = null
 ) {
     var key by remember(currentKey) { mutableStateOf(currentKey) }
     var isVisible by remember { mutableStateOf(false) }
@@ -294,6 +473,14 @@ private fun ApiKeyInput(
                             tint = SuccessGreen
                         )
                     }
+                } else if (hasKey && onClear != null) {
+                    IconButton(onClick = onClear) {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = "Remove key",
+                            tint = ErrorRed
+                        )
+                    }
                 }
             }
         },
@@ -304,5 +491,124 @@ private fun ApiKeyInput(
                 tint = if (hasKey) SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    )
+}
+
+@Composable
+private fun CustomProviderDialog(
+    initialName: String,
+    initialBaseUrl: String,
+    initialType: ProviderType,
+    initialApiKey: String,
+    isEdit: Boolean = false,
+    onDismiss: () -> Unit,
+    onConfirm: (name: String, baseUrl: String, type: ProviderType, apiKey: String) -> Unit
+) {
+    var name by remember { mutableStateOf(initialName) }
+    var baseUrl by remember { mutableStateOf(initialBaseUrl) }
+    var type by remember { mutableStateOf(initialType) }
+    var key by remember { mutableStateOf(initialApiKey) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (isEdit) "Edit custom provider" else "Add custom provider") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    placeholder = { Text("My Ollama, Local LLM, etc.") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                OutlinedTextField(
+                    value = baseUrl,
+                    onValueChange = { baseUrl = it },
+                    label = { Text("Base URL") },
+                    placeholder = { Text("https://api.example.com") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                Text("API style", style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = type == ProviderType.OPENAI_COMPATIBLE,
+                        onClick = { type = ProviderType.OPENAI_COMPATIBLE },
+                        label = { Text("OpenAI compatible") }
+                    )
+                    FilterChip(
+                        selected = type == ProviderType.ANTHROPIC,
+                        onClick = { type = ProviderType.ANTHROPIC },
+                        label = { Text("Anthropic") }
+                    )
+                }
+                OutlinedTextField(
+                    value = key,
+                    onValueChange = { key = it },
+                    label = { Text("API key (optional)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    visualTransformation = PasswordVisualTransformation()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(name, baseUrl, type, key) },
+                enabled = baseUrl.isNotBlank()
+            ) {
+                Text(if (isEdit) "Save" else "Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
+private fun AddModelDialog(
+    providerName: String,
+    onDismiss: () -> Unit,
+    onConfirm: (modelId: String, displayName: String?) -> Unit
+) {
+    var modelId by remember { mutableStateOf("") }
+    var displayName by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add model · $providerName") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = modelId,
+                    onValueChange = { modelId = it },
+                    label = { Text("Model ID") },
+                    placeholder = { Text("gpt-4o, claude-sonnet-4-20250514, llama3:70b…") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                OutlinedTextField(
+                    value = displayName,
+                    onValueChange = { displayName = it },
+                    label = { Text("Display name (optional)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(modelId, displayName.ifBlank { null }) },
+                enabled = modelId.isNotBlank()
+            ) { Text("Add") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }

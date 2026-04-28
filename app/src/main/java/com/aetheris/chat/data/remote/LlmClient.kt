@@ -177,6 +177,81 @@ class LlmClient @Inject constructor(
     // Request builders
     // =====================================================
 
+    /**
+     * Discover models from the provider's catalog endpoint.
+     *
+     * - OpenAI-compatible: `GET {baseUrl}/v1/models` with `Authorization: Bearer`.
+     *   This works for OpenAI, Groq, OpenRouter, Together, Ollama (`/api/tags`
+     *   is also supported indirectly via OpenAI-compat /v1/models on recent
+     *   versions), LM Studio, vLLM, etc.
+     * - Anthropic: `GET {baseUrl}/v1/models` with `x-api-key` + `anthropic-version`.
+     */
+    suspend fun listModels(
+        provider: Provider,
+        apiKey: String
+    ): Result<List<DiscoveredModel>> {
+        val baseUrl = provider.baseUrl.trimEnd('/')
+        if (baseUrl.isBlank()) return Result.failure(IllegalArgumentException("Base URL is empty"))
+
+        val request = when (provider.type) {
+            ProviderType.OPENAI_COMPATIBLE -> Request.Builder()
+                .url("$baseUrl/v1/models")
+                .get()
+                .addHeader("Authorization", "Bearer $apiKey")
+                .apply {
+                    if (provider.id == "openrouter") {
+                        addHeader("HTTP-Referer", "https://aetheris.chat")
+                        addHeader("X-Title", "Aetheris AI")
+                    }
+                    provider.extraHeaders.forEach { (k, v) -> addHeader(k, v) }
+                }
+                .build()
+            ProviderType.ANTHROPIC -> Request.Builder()
+                .url("$baseUrl/v1/models")
+                .get()
+                .addHeader("x-api-key", apiKey)
+                .addHeader("anthropic-version", "2023-06-01")
+                .build()
+        }
+
+        return try {
+            val response = okHttpClient.newCall(request).execute()
+            val body = response.body?.string().orEmpty()
+            if (!response.isSuccessful) {
+                return Result.failure(
+                    Exception("Models API error (${response.code}): ${parseErrorMessage(body, provider.type)}")
+                )
+            }
+
+            val items: List<DiscoveredModel> = when (provider.type) {
+                ProviderType.OPENAI_COMPATIBLE -> {
+                    val parsed = json.decodeFromString<OpenAIModelsResponse>(body)
+                    val list = if (parsed.data.isNotEmpty()) parsed.data else parsed.modelsAlt
+                    list.map {
+                        DiscoveredModel(
+                            id = it.id,
+                            displayName = it.displayName ?: it.name ?: it.id,
+                            contextWindow = it.contextLength ?: 4096
+                        )
+                    }
+                }
+                ProviderType.ANTHROPIC -> {
+                    val parsed = json.decodeFromString<AnthropicModelsResponse>(body)
+                    parsed.data.map {
+                        DiscoveredModel(
+                            id = it.id,
+                            displayName = it.displayName ?: it.id,
+                            contextWindow = 200_000
+                        )
+                    }
+                }
+            }
+            Result.success(items.distinctBy { it.id })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun buildOpenAIRequest(
         provider: Provider,
         apiKey: String,
@@ -338,3 +413,12 @@ sealed class StreamEvent {
     data class Error(val message: String) : StreamEvent()
     data object Done : StreamEvent()
 }
+
+/**
+ * Lightweight model entry returned from a provider's /v1/models endpoint.
+ */
+data class DiscoveredModel(
+    val id: String,
+    val displayName: String,
+    val contextWindow: Int = 4096
+)

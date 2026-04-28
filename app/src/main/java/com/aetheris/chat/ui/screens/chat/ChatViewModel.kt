@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.aetheris.chat.data.model.*
 import com.aetheris.chat.data.remote.StreamEvent
 import com.aetheris.chat.data.repository.ChatRepository
+import com.aetheris.chat.data.repository.ProvidersRepository
 import com.aetheris.chat.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -24,13 +25,17 @@ data class ChatUiState(
     val streamingEnabled: Boolean = true,
     val temperature: Float = 0.7f,
     val maxTokens: Int = 4096,
-    val error: String? = null
+    val availableProviders: List<Provider> = emptyList(),
+    val isRefreshingModels: Boolean = false,
+    val error: String? = null,
+    val info: String? = null
 )
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val settingsRepository: SettingsRepository,
+    private val providersRepository: ProvidersRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -65,6 +70,11 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             settingsRepository.maxTokens.collect { tokens ->
                 _uiState.update { it.copy(maxTokens = tokens) }
+            }
+        }
+        viewModelScope.launch {
+            providersRepository.observeAllProviders().collect { providers ->
+                _uiState.update { it.copy(availableProviders = providers) }
             }
         }
 
@@ -150,7 +160,7 @@ class ChatViewModel @Inject constructor(
                 return@launch
             }
 
-            val provider = settingsRepository.getProvider(state.selectedProviderId)
+            val provider = providersRepository.getProvider(state.selectedProviderId)
 
             // Get all messages for context
             val allMessages = chatRepository.getMessagesSync(conversationId)
@@ -283,6 +293,24 @@ class ChatViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    fun clearInfo() {
+        _uiState.update { it.copy(info = null) }
+    }
+
+    fun refreshModels(provider: Provider) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshingModels = true) }
+            val result = providersRepository.refreshModels(provider.id)
+            _uiState.update {
+                it.copy(
+                    isRefreshingModels = false,
+                    info = result.getOrNull()?.let { count -> "Found $count models for ${provider.name}" },
+                    error = result.exceptionOrNull()?.localizedMessage
+                )
+            }
+        }
     }
 
     fun newChat() {

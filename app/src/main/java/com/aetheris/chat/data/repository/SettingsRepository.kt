@@ -3,11 +3,9 @@ package com.aetheris.chat.data.repository
 import android.content.SharedPreferences
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
-import com.aetheris.chat.data.model.AIModel
 import com.aetheris.chat.data.model.DefaultProviders
 import com.aetheris.chat.data.model.Provider
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,8 +27,6 @@ class SettingsRepository @Inject constructor(
         val TEMPERATURE = floatPreferencesKey("temperature")
         val MAX_TOKENS = intPreferencesKey("max_tokens")
         val DARK_MODE = booleanPreferencesKey("dark_mode")
-        val CUSTOM_BASE_URL = stringPreferencesKey("custom_base_url")
-        val CUSTOM_MODEL_ID = stringPreferencesKey("custom_model_id")
 
         // Encrypted prefs key prefix
         private const val API_KEY_PREFIX = "api_key_"
@@ -124,47 +120,13 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { prefs -> prefs[DARK_MODE] = enabled }
     }
 
-    // --- Custom Provider ---
-
-    val customBaseUrl: Flow<String> = dataStore.data.map { prefs ->
-        prefs[CUSTOM_BASE_URL] ?: ""
-    }
-
-    suspend fun setCustomBaseUrl(url: String) {
-        dataStore.edit { prefs -> prefs[CUSTOM_BASE_URL] = url }
-    }
-
-    val customModelId: Flow<String> = dataStore.data.map { prefs ->
-        prefs[CUSTOM_MODEL_ID] ?: ""
-    }
-
-    suspend fun setCustomModelId(modelId: String) {
-        dataStore.edit { prefs -> prefs[CUSTOM_MODEL_ID] = modelId }
-    }
-
     // --- Helpers ---
 
     /**
-     * Resolve a provider by id. For the "custom" provider, the user-configured
-     * base URL and model id are pulled from DataStore so requests actually use
-     * the user's endpoint instead of the empty placeholder.
+     * Static lookup of a built-in provider. Custom providers and runtime model
+     * lists are now resolved via [com.aetheris.chat.data.repository.ProvidersRepository].
      */
-    suspend fun getProvider(providerId: String): Provider {
-        val base = DefaultProviders.allProviders.find { it.id == providerId }
-            ?: DefaultProviders.openAI
-        if (base.id != "custom") return base
-
-        val baseUrl = customBaseUrl.first().trim()
-        val modelId = customModelId.first().trim().ifBlank { "custom-model" }
-        return base.copy(
-            baseUrl = baseUrl,
-            models = listOf(AIModel(modelId, modelId, "custom", 4096))
-        )
-    }
-
-    /** Synchronous lookup that does NOT resolve custom-provider DataStore values. */
-    fun getProviderStatic(providerId: String): Provider {
-        return DefaultProviders.allProviders.find { it.id == providerId }
-            ?: DefaultProviders.openAI
+    fun getBuiltInProvider(providerId: String): Provider {
+        return DefaultProviders.builtIn.find { it.id == providerId } ?: DefaultProviders.openAI
     }
 }

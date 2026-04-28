@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,27 +18,28 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.aetheris.chat.data.model.AIModel
-import com.aetheris.chat.data.model.DefaultProviders
 import com.aetheris.chat.data.model.Provider
 import com.aetheris.chat.ui.theme.AetherisPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModelSelector(
+    providers: List<Provider>,
     selectedProviderId: String,
     selectedModelId: String,
     onProviderSelected: (Provider) -> Unit,
     onModelSelected: (AIModel) -> Unit,
+    onRefreshModels: ((Provider) -> Unit)? = null,
+    isRefreshing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var showSheet by remember { mutableStateOf(false) }
 
-    val provider = DefaultProviders.allProviders.find { it.id == selectedProviderId }
-        ?: DefaultProviders.openAI
-    val model = provider.models.find { it.id == selectedModelId }
-        ?: provider.models.firstOrNull()
+    val provider = providers.find { it.id == selectedProviderId }
+        ?: providers.firstOrNull()
+    val model = provider?.models?.find { it.id == selectedModelId }
+        ?: provider?.models?.firstOrNull()
 
-    // Compact selector chip
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
@@ -51,7 +53,7 @@ fun ModelSelector(
         ) {
             Column {
                 Text(
-                    text = provider.name,
+                    text = provider?.name ?: "No provider",
                     style = MaterialTheme.typography.labelSmall,
                     color = AetherisPrimary,
                     fontWeight = FontWeight.SemiBold
@@ -78,13 +80,16 @@ fun ModelSelector(
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             ModelSelectorContent(
+                providers = providers,
                 selectedProviderId = selectedProviderId,
                 selectedModelId = selectedModelId,
                 onProviderSelected = onProviderSelected,
                 onModelSelected = {
                     onModelSelected(it)
                     showSheet = false
-                }
+                },
+                onRefreshModels = onRefreshModels,
+                isRefreshing = isRefreshing
             )
         }
     }
@@ -92,10 +97,13 @@ fun ModelSelector(
 
 @Composable
 private fun ModelSelectorContent(
+    providers: List<Provider>,
     selectedProviderId: String,
     selectedModelId: String,
     onProviderSelected: (Provider) -> Unit,
-    onModelSelected: (AIModel) -> Unit
+    onModelSelected: (AIModel) -> Unit,
+    onRefreshModels: ((Provider) -> Unit)?,
+    isRefreshing: Boolean
 ) {
     Column(
         modifier = Modifier
@@ -103,55 +111,89 @@ private fun ModelSelectorContent(
             .padding(horizontal = 16.dp)
             .padding(bottom = 32.dp)
     ) {
-        Text(
-            text = "Choose a Model",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Provider tabs
-        var activeProvider by remember { mutableStateOf(selectedProviderId) }
-
-        ScrollableTabRow(
-            selectedTabIndex = DefaultProviders.allProviders.indexOfFirst { it.id == activeProvider }
-                .coerceAtLeast(0),
-            edgePadding = 0.dp,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = AetherisPrimary,
-            divider = {}
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
         ) {
-            DefaultProviders.allProviders.forEach { provider ->
-                Tab(
-                    selected = provider.id == activeProvider,
-                    onClick = {
-                        activeProvider = provider.id
-                        onProviderSelected(provider)
-                    },
-                    text = {
-                        Text(
-                            text = provider.name,
-                            fontWeight = if (provider.id == activeProvider)
-                                FontWeight.Bold else FontWeight.Normal
+            Text(
+                text = "Choose a Model",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
+            val activeProviderObj = providers.find { it.id == selectedProviderId }
+            if (onRefreshModels != null && activeProviderObj != null) {
+                IconButton(onClick = { onRefreshModels(activeProviderObj) }, enabled = !isRefreshing) {
+                    if (isRefreshing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = AetherisPrimary
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh model list",
+                            tint = AetherisPrimary
                         )
                     }
-                )
+                }
+            }
+        }
+
+        var activeProvider by remember(selectedProviderId) { mutableStateOf(selectedProviderId) }
+        val activeIndex = providers.indexOfFirst { it.id == activeProvider }.coerceAtLeast(0)
+
+        if (providers.isNotEmpty()) {
+            ScrollableTabRow(
+                selectedTabIndex = activeIndex,
+                edgePadding = 0.dp,
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = AetherisPrimary,
+                divider = {}
+            ) {
+                providers.forEach { provider ->
+                    Tab(
+                        selected = provider.id == activeProvider,
+                        onClick = {
+                            activeProvider = provider.id
+                            onProviderSelected(provider)
+                        },
+                        text = {
+                            Text(
+                                text = provider.name,
+                                fontWeight = if (provider.id == activeProvider)
+                                    FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Model list for active provider
-        val models = DefaultProviders.allProviders
-            .find { it.id == activeProvider }?.models ?: emptyList()
+        val models = providers.find { it.id == activeProvider }?.models ?: emptyList()
 
-        LazyColumn {
-            items(models) { model ->
-                ModelItem(
-                    model = model,
-                    isSelected = model.id == selectedModelId && activeProvider == selectedProviderId,
-                    onClick = { onModelSelected(model) }
-                )
+        if (models.isEmpty()) {
+            Text(
+                text = "No models yet. Tap the refresh icon above to fetch models from this provider, " +
+                    "or add one manually in Settings.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 24.dp)
+            )
+        } else {
+            LazyColumn {
+                items(models) { model ->
+                    ModelItem(
+                        model = model,
+                        isSelected = model.id == selectedModelId && activeProvider == selectedProviderId,
+                        onClick = { onModelSelected(model) }
+                    )
+                }
             }
         }
     }

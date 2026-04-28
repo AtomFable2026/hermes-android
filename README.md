@@ -24,9 +24,11 @@ Most chat apps lock you into one provider. **Aetheris** lets you talk to *every*
 
 ## 🚀 Features
 
-- 🔌 **Multi-provider** — OpenAI, Anthropic (Claude), Groq, OpenRouter, plus a fully configurable **Custom OpenAI-compatible** endpoint (Ollama, Together, LM Studio, vLLM, …)
+- 🔌 **Multi-provider** — OpenAI, Anthropic (Claude), Groq, OpenRouter, plus **unlimited user-defined custom providers** (Ollama, Together, LM Studio, vLLM, your own gateway, …) — both OpenAI-compatible and Anthropic-compatible API styles
+- 🔭 **Live model discovery** — fetch the model catalog from any provider via `GET /v1/models`, cached in Room; pin / hide / refresh per provider
+- ➕ **Add your own models** — manually add any model id to any provider, in case its catalog endpoint is unavailable
 - 💬 **Real streaming** — proper SSE framing for both OpenAI `[DONE]`-style and Anthropic typed events
-- 🔐 **Encrypted API keys** — `EncryptedSharedPreferences` with `MasterKey` (AES‑256‑GCM); never backed up to the cloud, never sent anywhere except the provider you chose
+- 🔐 **Encrypted API keys** — `EncryptedSharedPreferences` with `MasterKey` (AES‑256‑GCM); separate key per provider (built-in *or* custom); never backed up to the cloud, never sent anywhere except the provider you chose
 - 💾 **Persistent conversations** — Room database, auto-titled from your first message
 - 🧠 **Per-conversation model + system prompt** — change provider / model on the fly from the chat header
 - 📝 **Markdown rendering** — code blocks, lists, links, strikethrough via Markwon
@@ -97,7 +99,9 @@ di/               ← Hilt modules (AppModule, DatabaseModule)
 | **Anthropic** | Native `/v1/messages` | Claude Sonnet 4, Claude 3.5 Sonnet, Claude 3.5 Haiku |
 | **Groq** | OpenAI-compatible | Llama 3.3 70B, Mixtral 8x7B, Gemma 2 9B |
 | **OpenRouter** | OpenAI-compatible | GPT‑4o, Claude, Gemini 2.5 Pro, Llama 3.3 (via OR) |
-| **Custom** | OpenAI-compatible | Any base URL + model id (Ollama, vLLM, LM Studio, …) |
+| **Custom (any number)** | OpenAI- or Anthropic-compatible | Any base URL + model id (Ollama, vLLM, LM Studio, Together, your own gateway, …) |
+
+> Models are seeded from a curated bootstrap list and then **augmented at runtime** by `GET /v1/models` — tap the refresh icon in the model picker (or in Settings) to pull the latest catalog from any provider. Manually-entered models persist alongside discovered ones; pin favorites to the top, hide noisy entries.
 
 ## 🏁 Getting Started
 
@@ -121,11 +125,10 @@ cd AetherisAI
 
 ### First launch
 
-1. Open **Settings** → paste your API key for any provider (saved encrypted on-device).
-2. Pick your provider + model from the chat header.
-3. Start chatting. Tap ⏹ to stop streaming, ✦ for a new chat.
-
-For a custom OpenAI-compatible endpoint, fill in **Custom Base URL** and **Custom Model ID** in Settings, switch to the **Custom** provider, and you're set.
+1. Open **Settings** → paste your API key for any built-in provider (saved encrypted on-device).
+2. Optionally tap **Add custom provider** to register an Ollama / vLLM / LM Studio / Together / private gateway endpoint. Pick the API style (OpenAI- or Anthropic-compatible), set the base URL, and save its API key.
+3. Tap **Fetch models** on a provider card to populate the model catalog from `GET /v1/models`. Or use **Add model** to enter ids manually.
+4. Pick your provider + model from the chat header (or hit the refresh icon there). Start chatting. Tap ⏹ to stop streaming, ✦ for a new chat.
 
 ## 🔐 Privacy & security
 

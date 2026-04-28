@@ -2,8 +2,11 @@ package com.aetheris.chat.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aetheris.chat.data.model.CustomProvider
 import com.aetheris.chat.data.model.DefaultProviders
 import com.aetheris.chat.data.model.Provider
+import com.aetheris.chat.data.model.ProviderType
+import com.aetheris.chat.data.repository.ProvidersRepository
 import com.aetheris.chat.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -11,23 +14,24 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SettingsUiState(
-    val providers: List<Provider> = DefaultProviders.allProviders,
-    val selectedProviderId: String = "openai",
-    val selectedModelId: String = "gpt-4o",
+    val builtInProviders: List<Provider> = DefaultProviders.builtIn,
+    val customProviders: List<CustomProvider> = emptyList(),
+    val mergedProviders: List<Provider> = DefaultProviders.builtIn,
     val apiKeys: Map<String, String> = emptyMap(),
     val systemPrompt: String = "",
     val streamingEnabled: Boolean = true,
     val temperature: Float = 0.7f,
     val maxTokens: Int = 4096,
     val darkMode: Boolean = true,
-    val customBaseUrl: String = "",
-    val customModelId: String = "",
-    val saveMessage: String? = null
+    val refreshingProviderId: String? = null,
+    val saveMessage: String? = null,
+    val errorMessage: String? = null
 )
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val providersRepository: ProvidersRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -38,48 +42,41 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun loadSettings() {
+        // Reload encrypted API keys on demand. Keys keyed by built-in id, plus
+        // every custom-provider key, are pulled into a single map for the UI.
         viewModelScope.launch {
-            // Load all API keys
-            val keys = mutableMapOf<String, String>()
-            DefaultProviders.allProviders.forEach { provider ->
-                settingsRepository.getApiKey(provider.id)?.let {
-                    keys[provider.id] = it
+            providersRepository.observeCustomProviders().collect { customs ->
+                val keys = mutableMapOf<String, String>()
+                DefaultProviders.builtIn.forEach { p ->
+                    settingsRepository.getApiKey(p.id)?.let { keys[p.id] = it }
                 }
+                customs.forEach { c ->
+                    settingsRepository.getApiKey(c.providerKey)?.let { keys[c.providerKey] = it }
+                }
+                _uiState.update { it.copy(customProviders = customs, apiKeys = keys) }
             }
-
-            combine(
-                settingsRepository.selectedProviderId,
-                settingsRepository.selectedModelId,
-                settingsRepository.systemPrompt,
-                settingsRepository.streamingEnabled,
-                settingsRepository.temperature
-            ) { providerId, modelId, systemPrompt, streaming, temp ->
-                _uiState.update {
-                    it.copy(
-                        selectedProviderId = providerId,
-                        selectedModelId = modelId,
-                        apiKeys = keys,
-                        systemPrompt = systemPrompt,
-                        streamingEnabled = streaming,
-                        temperature = temp
-                    )
-                }
-            }.collect()
+        }
+        viewModelScope.launch {
+            providersRepository.observeAllProviders().collect { providers ->
+                _uiState.update { it.copy(mergedProviders = providers) }
+            }
         }
 
         viewModelScope.launch {
             combine(
+                settingsRepository.systemPrompt,
+                settingsRepository.streamingEnabled,
+                settingsRepository.temperature,
                 settingsRepository.maxTokens,
-                settingsRepository.darkMode,
-                settingsRepository.customBaseUrl,
-                settingsRepository.customModelId
-            ) { tokens, dark, baseUrl, modelId ->
+                settingsRepository.darkMode
+            ) { sys, streaming, temp, tokens, dark ->
                 _uiState.update {
                     it.copy(
+                        systemPrompt = sys,
+                        streamingEnabled = streaming,
+                        temperature = temp,
                         maxTokens = tokens,
-                        darkMode = dark,
-                        customBaseUrl = baseUrl,
-                        customModelId = modelId
+                        darkMode = dark
                     )
                 }
             }.collect()
@@ -96,43 +93,94 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setSelectedProvider(providerId: String) {
-        viewModelScope.launch { settingsRepository.setSelectedProvider(providerId) }
+    fun deleteApiKey(providerId: String) {
+        settingsRepository.deleteApiKey(providerId)
+        _uiState.update {
+            it.copy(
+                apiKeys = it.apiKeys.toMutableMap().apply { remove(providerId) },
+                saveMessage = "API key removed"
+            )
+        }
     }
 
-    fun setSelectedModel(modelId: String) {
-        viewModelScope.launch { settingsRepository.setSelectedModel(modelId) }
+    // ---- custom provider CRUD ----
+
+    fun addCustomProvider(name: String, baseUrl: String, type: ProviderType, apiKey: String?) {
+        if (baseUrl.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Base URL is required") }
+            return
+        }
+        viewModelScope.launch {
+            providersRepository.addCustomProvider(name, baseUrl, type, apiKey)
+            _uiState.update { it.copy(saveMessage = "Provider \"$name\" added") }
+        }
     }
 
-    fun setSystemPrompt(prompt: String) {
-        viewModelScope.launch { settingsRepository.setSystemPrompt(prompt) }
+    fun updateCustomProvider(id: Long, name: String, baseUrl: String, type: ProviderType) {
+        viewModelScope.launch {
+            providersRepository.updateCustomProvider(id, name, baseUrl, type)
+            _uiState.update { it.copy(saveMessage = "Provider updated") }
+        }
     }
 
-    fun setStreamingEnabled(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setStreamingEnabled(enabled) }
+    fun deleteCustomProvider(id: Long) {
+        viewModelScope.launch {
+            providersRepository.deleteCustomProvider(id)
+            _uiState.update { it.copy(saveMessage = "Provider deleted") }
+        }
     }
 
-    fun setTemperature(temp: Float) {
-        viewModelScope.launch { settingsRepository.setTemperature(temp) }
+    fun addCustomModel(providerKey: String, modelId: String, displayName: String?) {
+        viewModelScope.launch {
+            providersRepository.addCustomModel(providerKey, modelId, displayName)
+            _uiState.update { it.copy(saveMessage = "Model added") }
+        }
     }
 
-    fun setMaxTokens(tokens: Int) {
-        viewModelScope.launch { settingsRepository.setMaxTokens(tokens) }
+    fun setPinned(providerKey: String, modelId: String, pinned: Boolean) {
+        viewModelScope.launch { providersRepository.setPinned(providerKey, modelId, pinned) }
     }
 
-    fun setDarkMode(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setDarkMode(enabled) }
+    fun setHidden(providerKey: String, modelId: String, hidden: Boolean) {
+        viewModelScope.launch { providersRepository.setHidden(providerKey, modelId, hidden) }
     }
 
-    fun setCustomBaseUrl(url: String) {
-        viewModelScope.launch { settingsRepository.setCustomBaseUrl(url) }
+    fun refreshModels(providerId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(refreshingProviderId = providerId) }
+            val result = providersRepository.refreshModels(providerId)
+            _uiState.update {
+                it.copy(
+                    refreshingProviderId = null,
+                    saveMessage = result.getOrNull()?.let { count -> "Found $count models" },
+                    errorMessage = result.exceptionOrNull()?.localizedMessage
+                )
+            }
+        }
     }
 
-    fun setCustomModelId(modelId: String) {
-        viewModelScope.launch { settingsRepository.setCustomModelId(modelId) }
-    }
+    // ---- chat preferences ----
+
+    fun setSystemPrompt(prompt: String) =
+        viewModelScope.launch { settingsRepository.setSystemPrompt(prompt) }.let {}
+
+    fun setStreamingEnabled(enabled: Boolean) =
+        viewModelScope.launch { settingsRepository.setStreamingEnabled(enabled) }.let {}
+
+    fun setTemperature(temp: Float) =
+        viewModelScope.launch { settingsRepository.setTemperature(temp) }.let {}
+
+    fun setMaxTokens(tokens: Int) =
+        viewModelScope.launch { settingsRepository.setMaxTokens(tokens) }.let {}
+
+    fun setDarkMode(enabled: Boolean) =
+        viewModelScope.launch { settingsRepository.setDarkMode(enabled) }.let {}
 
     fun clearSaveMessage() {
         _uiState.update { it.copy(saveMessage = null) }
+    }
+
+    fun clearErrorMessage() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 }

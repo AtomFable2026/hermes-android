@@ -107,7 +107,7 @@ class ProvidersRepository @Inject constructor(
         type: ProviderType,
         apiKey: String?
     ): Long {
-        val id = customProviderDao.upsert(
+        val id = customProviderDao.insertProvider(
             CustomProviderEntity(
                 name = name.ifBlank { "Custom" },
                 baseUrl = baseUrl.trim().trimEnd('/'),
@@ -126,7 +126,7 @@ class ProvidersRepository @Inject constructor(
         baseUrl: String,
         type: ProviderType
     ) {
-        customProviderDao.upsert(
+        customProviderDao.insertProvider(
             CustomProviderEntity(
                 id = id,
                 name = name.ifBlank { "Custom" },
@@ -150,7 +150,7 @@ class ProvidersRepository @Inject constructor(
 
     suspend fun addCustomModel(providerKey: String, modelId: String, displayName: String?, contextWindow: Int = 4096) {
         if (modelId.isBlank()) return
-        cachedModelDao.upsert(
+        cachedModelDao.insertModel(
             CachedModelEntity(
                 providerKey = providerKey,
                 modelId = modelId.trim(),

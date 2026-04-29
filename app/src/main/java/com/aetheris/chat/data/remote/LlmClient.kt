@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -162,7 +163,7 @@ class LlmClient @Inject constructor(
             val content = when (provider.type) {
                 ProviderType.OPENAI_COMPATIBLE -> {
                     val parsed = json.decodeFromString<OpenAIResponse>(body)
-                    parsed.choices.firstOrNull()?.message?.content ?: ""
+                    parsed.choices.firstOrNull()?.message?.content?.jsonPrimitive?.content ?: ""
                 }
                 ProviderType.ANTHROPIC -> {
                     val parsed = json.decodeFromString<AnthropicResponse>(body)

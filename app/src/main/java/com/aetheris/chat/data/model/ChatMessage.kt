@@ -11,6 +11,7 @@ data class ChatMessage(
     val model: String? = null,
     val provider: String? = null,
     val timestamp: Long = System.currentTimeMillis(),
+    val images: List<String> = emptyList(),
     val isStreaming: Boolean = false,
     val isError: Boolean = false
 )

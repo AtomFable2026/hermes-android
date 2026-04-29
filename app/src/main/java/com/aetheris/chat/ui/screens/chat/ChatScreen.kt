@@ -18,6 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aetheris.chat.BuildConfig
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Error
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aetheris.chat.ui.components.*
@@ -129,28 +131,75 @@ fun ChatScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (uiState.messages.isEmpty()) {
-                EmptyChat(onSuggestionClick = viewModel::onInputChanged)
-            } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    items(
-                        items = uiState.messages,
-                        key = { it.id }
-                    ) { message ->
-                        ChatBubble(message = message)
-                    }
+            Column {
+                if (uiState.error != null) {
+                    ChatErrorPanel(
+                        error = uiState.error!!,
+                        onDismiss = viewModel::clearError
+                    )
+                }
 
-                    // Show typing indicator when loading and no streaming content yet
-                    if (uiState.isLoading && (uiState.messages.lastOrNull()?.content?.isEmpty() == true)) {
-                        item {
-                            TypingIndicator()
+                if (uiState.messages.isEmpty()) {
+                    EmptyChat(onSuggestionClick = viewModel::onInputChanged)
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(
+                            items = uiState.messages,
+                            key = { it.id }
+                        ) { message ->
+                            ChatBubble(message = message)
+                        }
+
+                        // Show typing indicator when loading and no streaming content yet
+                        if (uiState.isLoading && (uiState.messages.lastOrNull()?.content?.isEmpty() == true)) {
+                            item {
+                                TypingIndicator()
+                            }
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatErrorPanel(
+    error: String,
+    onDismiss: () -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Error,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Dismiss",
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
     }

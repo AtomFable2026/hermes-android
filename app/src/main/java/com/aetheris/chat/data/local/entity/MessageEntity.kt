@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 @Entity(
     tableName = "messages",
@@ -20,6 +21,7 @@ import androidx.room.PrimaryKey
         Index(value = ["timestamp"])
     ]
 )
+@Serializable
 data class MessageEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -29,5 +31,6 @@ data class MessageEntity(
     val model: String? = null,
     val provider: String? = null,
     val timestamp: Long = System.currentTimeMillis(),
+    val images: List<String> = emptyList(),
     val isError: Boolean = false
 )

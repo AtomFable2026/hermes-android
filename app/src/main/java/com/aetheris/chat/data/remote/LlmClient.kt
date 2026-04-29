@@ -1,5 +1,6 @@
 package com.aetheris.chat.data.remote
 
+import com.aetheris.chat.data.model.ChatMessage
 import com.aetheris.chat.data.model.MessageRole
 import com.aetheris.chat.data.model.Provider
 import com.aetheris.chat.data.model.ProviderType
@@ -10,6 +11,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -40,7 +43,7 @@ class LlmClient @Inject constructor(
         provider: Provider,
         apiKey: String,
         modelId: String,
-        messages: List<Pair<MessageRole, String>>,
+        messages: List<ChatMessage>,
         systemPrompt: String? = null,
         temperature: Double = 0.7,
         maxTokens: Int = 4096
@@ -133,7 +136,7 @@ class LlmClient @Inject constructor(
         provider: Provider,
         apiKey: String,
         modelId: String,
-        messages: List<Pair<MessageRole, String>>,
+        messages: List<ChatMessage>,
         systemPrompt: String? = null,
         temperature: Double = 0.7,
         maxTokens: Int = 4096
@@ -256,7 +259,7 @@ class LlmClient @Inject constructor(
         provider: Provider,
         apiKey: String,
         modelId: String,
-        messages: List<Pair<MessageRole, String>>,
+        messages: List<ChatMessage>,
         systemPrompt: String?,
         temperature: Double,
         maxTokens: Int,
@@ -264,10 +267,20 @@ class LlmClient @Inject constructor(
     ): Request {
         val allMessages = mutableListOf<OpenAIMessage>()
         if (!systemPrompt.isNullOrBlank()) {
-            allMessages.add(OpenAIMessage("system", systemPrompt))
+            allMessages.add(OpenAIMessage("system", json.encodeToJsonElement(systemPrompt)))
         }
-        messages.forEach { (role, content) ->
-            allMessages.add(OpenAIMessage(role.name.lowercase(), content))
+        messages.forEach { msg ->
+            val content: JsonElement = if (msg.images.isEmpty()) {
+                json.encodeToJsonElement(msg.content)
+            } else {
+                val blocks = mutableListOf<OpenAIContent>()
+                blocks.add(OpenAIContent(type = "text", text = msg.content))
+                msg.images.forEach { url ->
+                    blocks.add(OpenAIContent(type = "image_url", imageUrl = OpenAIImageUrl(url = url)))
+                }
+                json.encodeToJsonElement(blocks)
+            }
+            allMessages.add(OpenAIMessage(msg.role.name.lowercase(), content))
         }
 
         val requestBody = OpenAIRequest(
@@ -303,17 +316,36 @@ class LlmClient @Inject constructor(
         provider: Provider,
         apiKey: String,
         modelId: String,
-        messages: List<Pair<MessageRole, String>>,
+        messages: List<ChatMessage>,
         systemPrompt: String?,
         temperature: Double,
         maxTokens: Int,
         stream: Boolean
     ): Request {
         val anthropicMessages = messages
-            .filter { it.first != MessageRole.SYSTEM }
-            .map { (role, content) ->
+            .filter { it.role != MessageRole.SYSTEM }
+            .map { msg ->
+                val content: JsonElement = if (msg.images.isEmpty()) {
+                    json.encodeToJsonElement(msg.content)
+                } else {
+                    val blocks = mutableListOf<AnthropicContent>()
+                    blocks.add(AnthropicContent(type = "text", text = msg.content))
+                    msg.images.forEach { imgData ->
+                        if (imgData.startsWith("data:")) {
+                            val mediaType = imgData.substringAfter("data:").substringBefore(";")
+                            val base64 = imgData.substringAfter("base64,")
+                            blocks.add(
+                                AnthropicContent(
+                                    type = "image",
+                                    source = AnthropicImageSource(mediaType = mediaType, data = base64)
+                                )
+                            )
+                        }
+                    }
+                    json.encodeToJsonElement(blocks)
+                }
                 AnthropicMessage(
-                    role = if (role == MessageRole.USER) "user" else "assistant",
+                    role = if (msg.role == MessageRole.USER) "user" else "assistant",
                     content = content
                 )
             }

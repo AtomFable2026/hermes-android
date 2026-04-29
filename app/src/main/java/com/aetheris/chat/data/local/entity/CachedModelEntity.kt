@@ -3,6 +3,7 @@ package com.aetheris.chat.data.local.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /**
  * One model row — either fetched from a provider's /v1/models endpoint or
@@ -15,6 +16,7 @@ import androidx.room.PrimaryKey
     primaryKeys = ["providerKey", "modelId"],
     indices = [Index(value = ["providerKey"])]
 )
+@Serializable
 data class CachedModelEntity(
     val providerKey: String,
     val modelId: String,

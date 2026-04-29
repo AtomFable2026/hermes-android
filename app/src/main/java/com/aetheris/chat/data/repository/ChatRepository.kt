@@ -109,15 +109,11 @@ class ChatRepository @Inject constructor(
         temperature: Double,
         maxTokens: Int
     ): Flow<StreamEvent> {
-        val messagePairs = messages
-            .filter { it.role != MessageRole.SYSTEM }
-            .map { it.role to it.content }
-
         return llmClient.streamChat(
             provider = provider,
             apiKey = apiKey,
             modelId = modelId,
-            messages = messagePairs,
+            messages = messages,
             systemPrompt = systemPrompt,
             temperature = temperature,
             maxTokens = maxTokens
@@ -133,15 +129,11 @@ class ChatRepository @Inject constructor(
         temperature: Double,
         maxTokens: Int
     ): Result<String> {
-        val messagePairs = messages
-            .filter { it.role != MessageRole.SYSTEM }
-            .map { it.role to it.content }
-
         return llmClient.chat(
             provider = provider,
             apiKey = apiKey,
             modelId = modelId,
-            messages = messagePairs,
+            messages = messages,
             systemPrompt = systemPrompt,
             temperature = temperature,
             maxTokens = maxTokens
@@ -170,6 +162,7 @@ class ChatRepository @Inject constructor(
         model = model,
         provider = provider,
         timestamp = timestamp,
+        images = images,
         isError = isError
     )
 
@@ -181,6 +174,7 @@ class ChatRepository @Inject constructor(
         model = model,
         provider = provider,
         timestamp = timestamp,
+        images = images,
         isError = isError
     )
 }

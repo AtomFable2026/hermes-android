@@ -19,8 +19,11 @@ interface CachedModelDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(models: List<CachedModelEntity>)
 
+    @Query("SELECT * FROM cached_models ORDER BY providerKey ASC, displayName ASC")
+    suspend fun getAllCachedModelsSync(): List<CachedModelEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(model: CachedModelEntity)
+    suspend fun insertModel(model: CachedModelEntity)
 
     @Query("DELETE FROM cached_models WHERE providerKey = :providerKey AND fromApi = 1")
     suspend fun clearApiModelsForProvider(providerKey: String)

@@ -16,8 +16,11 @@ interface CustomProviderDao {
     @Query("SELECT * FROM custom_providers WHERE id = :id")
     suspend fun getById(id: Long): CustomProviderEntity?
 
+    @Query("SELECT * FROM custom_providers ORDER BY createdAt ASC")
+    suspend fun getAllProvidersSync(): List<CustomProviderEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(provider: CustomProviderEntity): Long
+    suspend fun insertProvider(provider: CustomProviderEntity): Long
 
     @Query("DELETE FROM custom_providers WHERE id = :id")
     suspend fun delete(id: Long)

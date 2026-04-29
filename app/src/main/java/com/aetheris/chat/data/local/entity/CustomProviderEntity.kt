@@ -3,6 +3,7 @@ package com.aetheris.chat.data.local.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /**
  * A user-defined custom LLM provider. Multiple custom providers can coexist;
@@ -13,6 +14,7 @@ import androidx.room.PrimaryKey
     tableName = "custom_providers",
     indices = [Index(value = ["name"], unique = false)]
 )
+@Serializable
 data class CustomProviderEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,

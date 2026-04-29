@@ -105,6 +105,8 @@ private fun ModelSelectorContent(
     onRefreshModels: ((Provider) -> Unit)?,
     isRefreshing: Boolean
 ) {
+    var searchQuery by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -143,6 +145,21 @@ private fun ModelSelectorContent(
             }
         }
 
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            placeholder = { Text("Search models...", style = MaterialTheme.typography.bodyMedium) },
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = AetherisPrimary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            )
+        )
+
         var activeProvider by remember(selectedProviderId) { mutableStateOf(selectedProviderId) }
         val activeIndex = providers.indexOfFirst { it.id == activeProvider }.coerceAtLeast(0)
 
@@ -175,19 +192,31 @@ private fun ModelSelectorContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        val models = providers.find { it.id == activeProvider }?.models ?: emptyList()
+        val allModels = providers.find { it.id == activeProvider }?.models ?: emptyList()
+        val filteredModels = if (searchQuery.isBlank()) {
+            allModels
+        } else {
+            allModels.filter {
+                it.name.contains(searchQuery, ignoreCase = true) ||
+                    it.id.contains(searchQuery, ignoreCase = true)
+            }
+        }
 
-        if (models.isEmpty()) {
+        if (filteredModels.isEmpty()) {
+            val emptyMsg = if (searchQuery.isNotBlank()) {
+                "No models match \"$searchQuery\""
+            } else {
+                "No models yet. Tap the refresh icon above to fetch models from this provider, or add one manually in Settings."
+            }
             Text(
-                text = "No models yet. Tap the refresh icon above to fetch models from this provider, " +
-                    "or add one manually in Settings.",
+                text = emptyMsg,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(vertical = 24.dp)
             )
         } else {
-            LazyColumn {
-                items(models) { model ->
+            LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
+                items(filteredModels) { model ->
                     ModelItem(
                         model = model,
                         isSelected = model.id == selectedModelId && activeProvider == selectedProviderId,

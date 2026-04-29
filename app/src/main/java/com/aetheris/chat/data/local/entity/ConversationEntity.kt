@@ -3,11 +3,13 @@ package com.aetheris.chat.data.local.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 @Entity(
     tableName = "conversations",
     indices = [Index(value = ["updatedAt"])]
 )
+@Serializable
 data class ConversationEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

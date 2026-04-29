@@ -2,6 +2,7 @@ package com.aetheris.chat.data.remote.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 // ============================================================
 // Anthropic Messages API DTOs
@@ -23,7 +24,22 @@ data class AnthropicRequest(
 @Serializable
 data class AnthropicMessage(
     val role: String, // "user" or "assistant"
-    val content: String
+    val content: JsonElement
+)
+
+@Serializable
+data class AnthropicContent(
+    val type: String,
+    val text: String? = null,
+    val source: AnthropicImageSource? = null
+)
+
+@Serializable
+data class AnthropicImageSource(
+    val type: String = "base64",
+    @SerialName("media_type")
+    val mediaType: String,
+    val data: String
 )
 
 // --- Non-streaming response ---

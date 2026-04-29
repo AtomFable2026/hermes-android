@@ -2,6 +2,7 @@ package com.aetheris.chat.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.aetheris.chat.data.local.dao.CachedModelDao
 import com.aetheris.chat.data.local.dao.ConversationDao
 import com.aetheris.chat.data.local.dao.CustomProviderDao
@@ -21,6 +22,7 @@ import com.aetheris.chat.data.local.entity.MessageEntity
     version = 2,
     exportSchema = false
 )
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun conversationDao(): ConversationDao
     abstract fun messageDao(): MessageDao

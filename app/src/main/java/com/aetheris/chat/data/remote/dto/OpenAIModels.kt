@@ -2,6 +2,7 @@ package com.aetheris.chat.data.remote.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 // ============================================================
 // OpenAI-compatible API DTOs
@@ -29,7 +30,20 @@ data class StreamOptions(
 @Serializable
 data class OpenAIMessage(
     val role: String, // "system", "user", "assistant"
-    val content: String
+    val content: JsonElement
+)
+
+@Serializable
+data class OpenAIContent(
+    val type: String,
+    val text: String? = null,
+    @SerialName("image_url")
+    val imageUrl: OpenAIImageUrl? = null
+)
+
+@Serializable
+data class OpenAIImageUrl(
+    val url: String
 )
 
 @Serializable

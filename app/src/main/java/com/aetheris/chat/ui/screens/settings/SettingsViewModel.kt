@@ -6,11 +6,13 @@ import com.aetheris.chat.data.model.CustomProvider
 import com.aetheris.chat.data.model.DefaultProviders
 import com.aetheris.chat.data.model.Provider
 import com.aetheris.chat.data.model.ProviderType
+import com.aetheris.chat.data.repository.BackupRepository
 import com.aetheris.chat.data.repository.ProvidersRepository
 import com.aetheris.chat.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 data class SettingsUiState(
@@ -31,7 +33,8 @@ data class SettingsUiState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val providersRepository: ProvidersRepository
+    private val providersRepository: ProvidersRepository,
+    private val backupRepository: BackupRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -175,6 +178,34 @@ class SettingsViewModel @Inject constructor(
 
     fun setDarkMode(enabled: Boolean) =
         viewModelScope.launch { settingsRepository.setDarkMode(enabled) }.let {}
+
+    fun exportBackup(password: String, file: File) {
+        viewModelScope.launch {
+            val result = backupRepository.exportBackup(password, file)
+            _uiState.update {
+                it.copy(
+                    saveMessage = result.fold(
+                        onSuccess = { "Backup exported successfully" },
+                        onFailure = { err -> "Export failed: ${err.localizedMessage}" }
+                    )
+                )
+            }
+        }
+    }
+
+    fun importBackup(password: String, file: File) {
+        viewModelScope.launch {
+            val result = backupRepository.importBackup(password, file)
+            _uiState.update {
+                it.copy(
+                    saveMessage = result.fold(
+                        onSuccess = { "Backup imported successfully. Restart app to see changes." },
+                        onFailure = { err -> "Import failed: ${err.localizedMessage}" }
+                    )
+                )
+            }
+        }
+    }
 
     fun clearSaveMessage() {
         _uiState.update { it.copy(saveMessage = null) }

@@ -96,6 +96,10 @@ class ChatRepository @Inject constructor(
         messageDao.updateContent(id, content)
     }
 
+    suspend fun updateMessageReasoning(id: Long, reasoning: String) {
+        messageDao.updateReasoning(id, reasoning)
+    }
+
     // =====================================================
     // LLM Chat
     // =====================================================
@@ -163,6 +167,7 @@ class ChatRepository @Inject constructor(
         provider = provider,
         timestamp = timestamp,
         images = images,
+        reasoning = reasoning,
         isError = isError
     )
 
@@ -175,6 +180,7 @@ class ChatRepository @Inject constructor(
         provider = provider,
         timestamp = timestamp,
         images = images,
+        reasoning = reasoning,
         isError = isError
     )
 }

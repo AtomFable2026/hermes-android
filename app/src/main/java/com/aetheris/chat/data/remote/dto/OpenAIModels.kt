@@ -66,7 +66,11 @@ data class OpenAIChoice(
 @Serializable
 data class OpenAIDelta(
     val role: String? = null,
-    val content: String? = null
+    val content: String? = null,
+    @SerialName("reasoning_content")
+    val reasoningContent: String? = null,
+    /** Support for DeepSeek and others who use 'thought' field. */
+    val thought: String? = null
 )
 
 @Serializable

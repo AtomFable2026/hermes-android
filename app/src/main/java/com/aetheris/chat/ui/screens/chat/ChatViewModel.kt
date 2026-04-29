@@ -193,6 +193,7 @@ class ChatViewModel @Inject constructor(
             val assistantId = chatRepository.saveMessage(assistantMsg)
 
             val contentBuilder = StringBuilder()
+            val reasoningBuilder = StringBuilder()
 
             chatRepository.streamChat(
                 provider = provider,
@@ -207,6 +208,10 @@ class ChatViewModel @Inject constructor(
                     is StreamEvent.Token -> {
                         contentBuilder.append(event.text)
                         chatRepository.updateMessageContent(assistantId, contentBuilder.toString())
+                    }
+                    is StreamEvent.Thought -> {
+                        reasoningBuilder.append(event.text)
+                        chatRepository.updateMessageReasoning(assistantId, reasoningBuilder.toString())
                     }
                     is StreamEvent.Done -> {
                         chatRepository.updateMessageContent(assistantId, contentBuilder.toString())

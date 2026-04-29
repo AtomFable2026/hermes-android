@@ -32,5 +32,6 @@ data class MessageEntity(
     val provider: String? = null,
     val timestamp: Long = System.currentTimeMillis(),
     val images: List<String> = emptyList(),
+    val reasoning: String? = null,
     val isError: Boolean = false
 )

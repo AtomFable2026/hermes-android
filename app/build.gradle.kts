@@ -32,6 +32,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            buildConfigField("boolean", "IS_PREVIEW", "false")
         }
 
         register("preview") {

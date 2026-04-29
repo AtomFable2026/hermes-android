@@ -163,7 +163,12 @@ class LlmClient @Inject constructor(
             val content = when (provider.type) {
                 ProviderType.OPENAI_COMPATIBLE -> {
                     val parsed = json.decodeFromString<OpenAIResponse>(body)
-                    parsed.choices.firstOrNull()?.message?.content?.jsonPrimitive?.content ?: ""
+                    val contentElement = parsed.choices.firstOrNull()?.message?.content
+                    when {
+                        contentElement == null -> ""
+                        contentElement is kotlinx.serialization.json.JsonPrimitive -> contentElement.content
+                        else -> contentElement.toString() // Fallback for complex content
+                    }
                 }
                 ProviderType.ANTHROPIC -> {
                     val parsed = json.decodeFromString<AnthropicResponse>(body)
@@ -268,7 +273,10 @@ class LlmClient @Inject constructor(
     ): Request {
         val allMessages = mutableListOf<OpenAIMessage>()
         if (!systemPrompt.isNullOrBlank()) {
-            allMessages.add(OpenAIMessage("system", json.encodeToJsonElement(systemPrompt)))
+            // Modern OpenAI models (o1, o3, etc.) prefer 'developer' role.
+            // For general compatibility, we use 'developer' if the model name suggests it.
+            val role = if (modelId.startsWith("o1") || modelId.startsWith("o3")) "developer" else "system"
+            allMessages.add(OpenAIMessage(role, json.encodeToJsonElement(systemPrompt)))
         }
         messages.forEach { msg ->
             val content: JsonElement = if (msg.images.isEmpty()) {
@@ -388,6 +396,8 @@ class LlmClient @Inject constructor(
 
             when {
                 delta?.content != null -> StreamEvent.Token(delta.content)
+                delta?.reasoningContent != null -> StreamEvent.Thought(delta.reasoningContent)
+                delta?.thought != null -> StreamEvent.Thought(delta.thought)
                 // finishReason is reported in the same event that closes the
                 // stream; we don't emit Done here — [DONE] (or end of stream)
                 // does that, avoiding duplicate Done events.
@@ -443,6 +453,7 @@ class LlmClient @Inject constructor(
  */
 sealed class StreamEvent {
     data class Token(val text: String) : StreamEvent()
+    data class Thought(val text: String) : StreamEvent()
     data class Error(val message: String) : StreamEvent()
     data object Done : StreamEvent()
 }

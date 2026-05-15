@@ -64,7 +64,12 @@ fun SettingsScreen(
         uri?.let {
             val file = File(context.cacheDir, "temp_backup.bin")
             viewModel.exportBackup(backupPassword, file)
-            // Copy file to URI logic here (omitted for brevity but normally use context.contentResolver.openOutputStream(uri))
+            file.inputStream().use { input ->
+                context.contentResolver.openOutputStream(uri)?.use { output ->
+                    input.copyTo(output)
+                }
+            }
+            file.delete()
         }
     }
 
@@ -73,8 +78,13 @@ fun SettingsScreen(
     ) { uri ->
         uri?.let {
             val file = File(context.cacheDir, "temp_import.bin")
-            // Copy URI to file logic here
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                file.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
             viewModel.importBackup(backupPassword, file)
+            file.delete()
         }
     }
 
@@ -272,18 +282,6 @@ fun SettingsScreen(
             }
 
             // ── Data Management ──
-            val context = LocalContext.current
-            var showBackupDialog by remember { mutableStateOf<Boolean?>(null) } // true = export, false = import
-            
-            val exportLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.CreateDocument("application/octet-stream")
-            ) { uri ->
-                uri?.let {
-                    // Logic to handle password and call viewModel.exportBackup
-                    // For this simple implementation, we'll use a dialog
-                }
-            }
-
             SettingsSection(title = "Data Management") {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(

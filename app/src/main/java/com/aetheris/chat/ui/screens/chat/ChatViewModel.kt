@@ -126,7 +126,13 @@ class ChatViewModel @Inject constructor(
                     systemPrompt = state.systemPrompt
                 )
                 _uiState.update { it.copy(conversationId = id) }
-                loadConversation(id)
+                // Set up message observer directly (avoids race with loadConversation)
+                messagesJob?.cancel()
+                messagesJob = viewModelScope.launch {
+                    chatRepository.getMessages(id).collect { messages ->
+                        _uiState.update { it.copy(messages = messages) }
+                    }
+                }
                 id
             }
 

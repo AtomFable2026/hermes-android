@@ -54,7 +54,7 @@ ui/components     ← ChatBubble, MessageInput, ModelSelector, TypingIndicator
 ui/theme          ← Aetheris Material 3 palette, typography, theme
 data/local        ← Room: AppDatabase, ConversationDao, MessageDao
 data/remote       ← LlmClient (OkHttp + SSE) + OpenAI / Anthropic DTOs
-data/repository   ← ChatRepository, SettingsRepository (encrypted + DataStore)
+data/repository   ← ChatRepository, SettingsRepository, ProvidersRepository, BackupRepository
 di/               ← Hilt modules (AppModule, DatabaseModule)
 ```
 
@@ -63,26 +63,32 @@ di/               ← Hilt modules (AppModule, DatabaseModule)
 │  Compose UI  │ ◄──────────── │   ViewModels   │
 └──────────────┘               └───────┬────────┘
                                        │
-                       ┌───────────────┴───────────────┐
-                       ▼                               ▼
-            ┌────────────────────┐         ┌──────────────────────┐
-            │  ChatRepository    │         │  SettingsRepository  │
-            └─────────┬──────────┘         └──────────┬───────────┘
-                      │                               │
-        ┌─────────────┼─────────────┐                 │
-        ▼             ▼             ▼                 ▼
-   ┌─────────┐  ┌──────────┐  ┌──────────┐   ┌──────────────────┐
-   │  Room   │  │  Room    │  │  LlmClient│  │ DataStore        │
-   │  Conv.  │  │  Msgs    │  │  OkHttp+  │  │ + EncryptedPrefs │
-   └─────────┘  └──────────┘  │  SSE      │  └──────────────────┘
-                              └──────────┘
+           ┌───────────┬───────────────┼───────────────┬───────────┐
+           ▼           ▼               ▼               ▼           ▼
+  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+  │    Chat      │ │   Settings   │ │  Providers   │ │   Backup     │
+  │  Repository  │ │  Repository  │ │  Repository  │ │  Repository  │
+  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+         │                │                │                │
+         ▼                ▼                ▼                ▼
+   ┌──────────┐   ┌──────────────┐  ┌──────────┐    ┌──────────┐
+   │  Room DB │   │  DataStore + │  │  Room DB │    │  File I/O│
+   │ Conv/Msg │   │  Encrypted   │  │  Models  │    │  AES-256 │
+   └──────────┘   │  SharedPrefs │  └──────────┘    └──────────┘
+                  └──────┬───────┘
+                         │
+                         ▼
+                  ┌──────────────┐
+                  │   LlmClient  │
+                  │  OkHttp+SSE  │
+                  └──────────────┘
 ```
 
 ## 🛠 Tech Stack
 
 | Layer | Tools |
 | --- | --- |
-| **Language / Build** | Kotlin 2.1, AGP 8.7.3, Gradle 9.3, JDK 17 |
+| **Language / Build** | Kotlin 2.1, AGP 8.7.3, Gradle 9.5, JDK 17 |
 | **UI** | Jetpack Compose (BOM 2024.12), Material 3, Navigation-Compose, Material Icons Extended |
 | **DI** | Hilt 2.53 + `hilt-navigation-compose` |
 | **Persistence** | Room 2.6, DataStore Preferences, `EncryptedSharedPreferences` (security-crypto 1.1.0) |

@@ -141,7 +141,7 @@ class LlmClient @Inject constructor(
         systemPrompt: String? = null,
         temperature: Double = 0.7,
         maxTokens: Int = 4096
-    ): Result<String> {
+    ): Result<String> = kotlinx.coroutines.withContext(Dispatchers.IO) {
         val request = when (provider.type) {
             ProviderType.OPENAI_COMPATIBLE -> buildOpenAIRequest(
                 provider, apiKey, modelId, messages, systemPrompt, temperature, maxTokens, stream = false
@@ -151,14 +151,14 @@ class LlmClient @Inject constructor(
             )
         }
 
-        return try {
+        try {
             val response = okHttpClient.newCall(request).execute()
             if (!response.isSuccessful) {
                 val errorBody = response.body?.string() ?: "Unknown error"
-                return Result.failure(Exception(parseErrorMessage(errorBody, provider.type)))
+                return@withContext Result.failure(Exception(parseErrorMessage(errorBody, provider.type)))
             }
 
-            val body = response.body?.string() ?: return Result.failure(Exception("Empty response"))
+            val body = response.body?.string() ?: return@withContext Result.failure(Exception("Empty response"))
 
             val content = when (provider.type) {
                 ProviderType.OPENAI_COMPATIBLE -> {
@@ -186,6 +186,21 @@ class LlmClient @Inject constructor(
     // Request builders
     // =====================================================
 
+    private fun buildUrl(baseUrl: String, path: String): String {
+        val base = baseUrl.trimEnd('/')
+        val pathPart = if (path.startsWith("v1/")) path.substring(3) else path
+        
+        // If baseUrl already contains /v1 (at the end or in the middle), 
+        // we use it as the base and just append the specific endpoint path.
+        // This prevents doubling /v1/v1 if the user provided it in the settings.
+        return if (base.contains("/v1")) {
+            "$base/$pathPart"
+        } else {
+            // Otherwise, we assume the base URL is the root and prepend /v1
+            "$base/v1/$pathPart"
+        }
+    }
+
     /**
      * Discover models from the provider's catalog endpoint.
      *
@@ -198,13 +213,13 @@ class LlmClient @Inject constructor(
     suspend fun listModels(
         provider: Provider,
         apiKey: String
-    ): Result<List<DiscoveredModel>> {
+    ): Result<List<DiscoveredModel>> = kotlinx.coroutines.withContext(Dispatchers.IO) {
         val baseUrl = provider.baseUrl.trimEnd('/')
-        if (baseUrl.isBlank()) return Result.failure(IllegalArgumentException("Base URL is empty"))
+        if (baseUrl.isBlank()) return@withContext Result.failure(IllegalArgumentException("Base URL is empty"))
 
         val request = when (provider.type) {
             ProviderType.OPENAI_COMPATIBLE -> Request.Builder()
-                .url("$baseUrl/v1/models")
+                .url(buildUrl(baseUrl, "models"))
                 .get()
                 .addHeader("Authorization", "Bearer $apiKey")
                 .apply {
@@ -216,31 +231,42 @@ class LlmClient @Inject constructor(
                 }
                 .build()
             ProviderType.ANTHROPIC -> Request.Builder()
-                .url("$baseUrl/v1/models")
+                .url(buildUrl(baseUrl, "models"))
                 .get()
                 .addHeader("x-api-key", apiKey)
                 .addHeader("anthropic-version", "2023-06-01")
                 .build()
         }
 
-        return try {
+        try {
             val response = okHttpClient.newCall(request).execute()
             val body = response.body?.string().orEmpty()
             if (!response.isSuccessful) {
-                return Result.failure(
+                return@withContext Result.failure(
                     Exception("Models API error (${response.code}): ${parseErrorMessage(body, provider.type)}")
                 )
             }
 
             val items: List<DiscoveredModel> = when (provider.type) {
                 ProviderType.OPENAI_COMPATIBLE -> {
-                    val parsed = json.decodeFromString<OpenAIModelsResponse>(body)
-                    val list = if (parsed.data.isNotEmpty()) parsed.data else parsed.modelsAlt
-                    list.map {
+                    val list = try {
+                        val resp = json.decodeFromString<OpenAIModelsResponse>(body)
+                        if (resp.data.isNotEmpty()) resp.data else resp.modelsAlt
+                    } catch (e: Exception) {
+                        // Fallback for some local providers that return a raw array of models
+                        try {
+                            json.decodeFromString<List<OpenAIModelItem>>(body)
+                        } catch (e2: Exception) {
+                            emptyList()
+                        }
+                    }
+
+                    list.mapNotNull {
+                        val id = it.id ?: it.name ?: return@mapNotNull null
                         DiscoveredModel(
-                            id = it.id,
-                            displayName = it.displayName ?: it.name ?: it.id,
-                            contextWindow = it.contextLength ?: 4096
+                            id = id,
+                            displayName = it.displayName ?: it.name ?: id,
+                            contextWindow = it.contextWindow ?: it.contextLength ?: 4096
                         )
                     }
                 }
@@ -304,7 +330,7 @@ class LlmClient @Inject constructor(
         val baseUrl = provider.baseUrl.trimEnd('/')
 
         return Request.Builder()
-            .url("$baseUrl/v1/chat/completions")
+            .url(buildUrl(baseUrl, "chat/completions"))
             .post(jsonBody.toRequestBody("application/json".toMediaType()))
             .addHeader("Authorization", "Bearer $apiKey")
             .addHeader("Content-Type", "application/json")
@@ -372,7 +398,7 @@ class LlmClient @Inject constructor(
         val baseUrl = provider.baseUrl.trimEnd('/')
 
         return Request.Builder()
-            .url("$baseUrl/v1/messages")
+            .url(buildUrl(baseUrl, "messages"))
             .post(jsonBody.toRequestBody("application/json".toMediaType()))
             .addHeader("x-api-key", apiKey)
             .addHeader("anthropic-version", "2023-06-01")

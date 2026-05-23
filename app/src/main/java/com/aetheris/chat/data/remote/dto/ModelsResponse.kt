@@ -18,11 +18,12 @@ data class OpenAIModelsResponse(
 
 @Serializable
 data class OpenAIModelItem(
-    val id: String,
+    val id: String? = null,
     val name: String? = null,
     @SerialName("display_name") val displayName: String? = null,
     val owned_by: String? = null,
-    @SerialName("context_length") val contextLength: Int? = null
+    @SerialName("context_length") val contextLength: Int? = null,
+    @SerialName("context_window") val contextWindow: Int? = null
 )
 
 @Serializable

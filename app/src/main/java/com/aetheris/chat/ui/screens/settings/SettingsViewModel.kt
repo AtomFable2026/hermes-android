@@ -33,7 +33,7 @@ data class SettingsUiState(
     val hasUpdate: Boolean = false,
     val updateUrl: String = "",
     val isCheckingUpdate: Boolean = false,
-    val appVersion: String = BuildConfig.VERSION_NAME + BuildConfig.VERSION_NAME_SUFFIX
+    val appVersion: String = BuildConfig.VERSION_NAME
 )
 
 @HiltViewModel

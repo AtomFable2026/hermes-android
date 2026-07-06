@@ -91,7 +91,7 @@ class SettingsViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 apiKeys = it.apiKeys.toMutableMap().apply { this[providerId] = apiKey },
-                saveMessage = "API key saved securely"
+                saveMessage = "API 密钥已安全保存"
             )
         }
     }
@@ -101,7 +101,7 @@ class SettingsViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 apiKeys = it.apiKeys.toMutableMap().apply { remove(providerId) },
-                saveMessage = "API key removed"
+                saveMessage = "API 密钥已移除"
             )
         }
     }
@@ -110,33 +110,33 @@ class SettingsViewModel @Inject constructor(
 
     fun addCustomProvider(name: String, baseUrl: String, type: ProviderType, apiKey: String?) {
         if (baseUrl.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Base URL is required") }
+            _uiState.update { it.copy(errorMessage = "API 地址不能为空") }
             return
         }
         viewModelScope.launch {
             providersRepository.addCustomProvider(name, baseUrl, type, apiKey)
-            _uiState.update { it.copy(saveMessage = "Provider \"$name\" added") }
+            _uiState.update { it.copy(saveMessage = "已添加服务商 \"$name\"") }
         }
     }
 
     fun updateCustomProvider(id: Long, name: String, baseUrl: String, type: ProviderType) {
         viewModelScope.launch {
             providersRepository.updateCustomProvider(id, name, baseUrl, type)
-            _uiState.update { it.copy(saveMessage = "Provider updated") }
+            _uiState.update { it.copy(saveMessage = "服务商已更新") }
         }
     }
 
     fun deleteCustomProvider(id: Long) {
         viewModelScope.launch {
             providersRepository.deleteCustomProvider(id)
-            _uiState.update { it.copy(saveMessage = "Provider deleted") }
+            _uiState.update { it.copy(saveMessage = "服务商已删除") }
         }
     }
 
     fun addCustomModel(providerKey: String, modelId: String, displayName: String?) {
         viewModelScope.launch {
             providersRepository.addCustomModel(providerKey, modelId, displayName)
-            _uiState.update { it.copy(saveMessage = "Model added") }
+            _uiState.update { it.copy(saveMessage = "模型已添加") }
         }
     }
 
@@ -155,7 +155,7 @@ class SettingsViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     refreshingProviderId = null,
-                    saveMessage = result.getOrNull()?.let { count -> "Found $count models" },
+                    saveMessage = result.getOrNull()?.let { count -> "找到 $count 个模型" },
                     errorMessage = result.exceptionOrNull()?.localizedMessage
                 )
             }
@@ -185,8 +185,8 @@ class SettingsViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     saveMessage = result.fold(
-                        onSuccess = { "Backup exported successfully" },
-                        onFailure = { err -> "Export failed: ${err.localizedMessage}" }
+                        onSuccess = { "备份导出成功" },
+                        onFailure = { err -> "导出失败: ${err.localizedMessage}" }
                     )
                 )
             }
@@ -199,8 +199,8 @@ class SettingsViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     saveMessage = result.fold(
-                        onSuccess = { "Backup imported successfully. Restart app to see changes." },
-                        onFailure = { err -> "Import failed: ${err.localizedMessage}" }
+                        onSuccess = { "备份导入成功。重启应用查看更改。" },
+                        onFailure = { err -> "导入失败: ${err.localizedMessage}" }
                     )
                 )
             }

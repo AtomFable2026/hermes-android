@@ -60,7 +60,7 @@ fun ConversationsScreen(
                     IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
+                            contentDescription = "设置"
                         )
                     }
                 },
@@ -79,7 +79,7 @@ fun ConversationsScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "New Chat"
+                    contentDescription = "新建对话"
                 )
             }
         }
@@ -176,7 +176,7 @@ private fun ConversationItem(
             IconButton(onClick = { showDeleteDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
+                    contentDescription = "删除",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier.size(20.dp)
                 )
@@ -187,8 +187,8 @@ private fun ConversationItem(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Conversation?") },
-            text = { Text("This action cannot be undone.") },
+            title = { Text("删除对话？") },
+            text = { Text("此操作不可撤销。") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -197,12 +197,12 @@ private fun ConversationItem(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = ErrorRed)
                 ) {
-                    Text("Delete")
+                    Text("删除")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text("取消")
                 }
             }
         )
@@ -225,14 +225,14 @@ private fun EmptyConversations(onNewChat: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "No conversations yet",
+            text = "暂无对话",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Start your first chat with Aetheris AI",
+            text = "开始你的第一次 Hermes AI 对话",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -243,7 +243,7 @@ private fun EmptyConversations(onNewChat: () -> Unit) {
         ) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("New Chat")
+            Text("新建对话")
         }
     }
 }
@@ -253,9 +253,9 @@ private fun formatDate(timestamp: Long): String {
     val diff = now - timestamp
 
     return when {
-        diff < 60_000 -> "Just now"
-        diff < 3_600_000 -> "${diff / 60_000}m ago"
-        diff < 86_400_000 -> "${diff / 3_600_000}h ago"
+        diff < 60_000 -> "刚刚"
+        diff < 3_600_000 -> "${diff / 60_000}分钟前"
+        diff < 86_400_000 -> "${diff / 3_600_000}小时前"
         diff < 604_800_000 -> {
             val sdf = SimpleDateFormat("EEE", Locale.getDefault())
             sdf.format(Date(timestamp))

@@ -53,7 +53,7 @@ class SettingsRepository @Inject constructor(
     // --- Selected Provider ---
 
     val selectedProviderId: Flow<String> = dataStore.data.map { prefs ->
-        prefs[SELECTED_PROVIDER_ID] ?: "openai"
+        prefs[SELECTED_PROVIDER_ID] ?: ""
     }
 
     suspend fun setSelectedProvider(providerId: String) {
@@ -63,7 +63,7 @@ class SettingsRepository @Inject constructor(
     // --- Selected Model ---
 
     val selectedModelId: Flow<String> = dataStore.data.map { prefs ->
-        prefs[SELECTED_MODEL_ID] ?: "gpt-4o"
+        prefs[SELECTED_MODEL_ID] ?: ""
     }
 
     suspend fun setSelectedModel(modelId: String) {

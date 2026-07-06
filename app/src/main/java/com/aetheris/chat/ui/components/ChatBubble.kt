@@ -61,7 +61,7 @@ fun ChatBubble(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "Aetheris",
+                    text = "Hermes",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = AetherisPrimary
@@ -157,7 +157,7 @@ private fun CopyButton(text: String) {
     ) {
         Icon(
             imageVector = Icons.Default.ContentCopy,
-            contentDescription = "Copy",
+            contentDescription = "复制",
             tint = if (copied) SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.size(14.dp)
         )
@@ -243,7 +243,7 @@ private fun ThoughtProcess(reasoning: String) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Thought process",
+                    text = "思考过程",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)

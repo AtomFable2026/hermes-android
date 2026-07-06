@@ -61,6 +61,7 @@ fun ChatScreen(
     }
 
     Scaffold(
+        modifier = Modifier.fillMaxSize().imePadding(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             Column {
@@ -70,7 +71,7 @@ fun ChatScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "PREVIEW VERSION - NOT FOR PRODUCTION",
+                            text = "预览版 - 请勿用于生产环境",
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier
                                 .padding(vertical = 2.dp)
@@ -96,7 +97,7 @@ fun ChatScreen(
                         IconButton(onClick = onNavigateBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
+                                contentDescription = "返回"
                             )
                         }
                     },
@@ -104,7 +105,7 @@ fun ChatScreen(
                         IconButton(onClick = viewModel::newChat) {
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "New Chat",
+                                contentDescription = "新建对话",
                                 tint = AetherisPrimary
                             )
                         }
@@ -197,7 +198,7 @@ private fun ChatErrorPanel(
             IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Dismiss",
+                    contentDescription = "关闭",
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -224,7 +225,7 @@ private fun EmptyChat(onSuggestionClick: (String) -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Aetheris AI",
+            text = "Hermes AI",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
@@ -233,7 +234,7 @@ private fun EmptyChat(onSuggestionClick: (String) -> Unit) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Ask anything — I'm here to help.\nPowered by the world's best AI models.",
+            text = "随便问什么 — 我都在这里帮你。\n由全球最先进的 AI 模型驱动。",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -244,10 +245,10 @@ private fun EmptyChat(onSuggestionClick: (String) -> Unit) {
 
         // Suggestion chips
         val suggestions = listOf(
-            "✍️ Write a story",
-            "💻 Help me code",
-            "📝 Summarize text",
-            "🧠 Explain a concept"
+            "✍️ 写个故事",
+            "💻 帮我编程",
+            "📝 总结文本",
+            "🧠 解释概念"
         )
 
         Column(

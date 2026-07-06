@@ -93,13 +93,13 @@ fun SettingsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Settings",
-                        fontWeight = FontWeight.Bold
+                                "设置",
+                                fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -118,7 +118,7 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // ── Built-in Providers ──
-            SettingsSection(title = "Built-in providers") {
+            SettingsSection(title = "内置服务商") {
                 DefaultProviders.builtIn.forEach { provider ->
                     val merged = uiState.mergedProviders.find { it.id == provider.id } ?: provider
                     ProviderCard(
@@ -137,10 +137,10 @@ fun SettingsScreen(
             }
 
             // ── Custom Providers ──
-            SettingsSection(title = "Custom providers") {
+            SettingsSection(title = "自定义服务商") {
                 if (uiState.customProviders.isEmpty()) {
                     Text(
-                        text = "Add any OpenAI-compatible or Anthropic-compatible endpoint — Ollama, vLLM, LM Studio, your own gateway, etc.",
+                        text = "添加任意 OpenAI 兼容或 Anthropic 兼容的服务商 — Ollama, vLLM, LM Studio, 你自己的网关等。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -151,7 +151,7 @@ fun SettingsScreen(
                     val merged = uiState.mergedProviders.find { it.id == custom.providerKey }
                     ProviderCard(
                         title = custom.name,
-                        subtitle = custom.baseUrl.ifBlank { "(no base URL)" } + " · ${custom.type.displayName()}",
+                        subtitle = custom.baseUrl.ifBlank { "(无地址)" } + " · ${custom.type.displayName()}",
                         models = merged?.models?.size ?: 0,
                         apiKey = uiState.apiKeys[custom.providerKey] ?: "",
                         isRefreshing = uiState.refreshingProviderId == custom.providerKey,
@@ -173,16 +173,16 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Add custom provider")
+                    Text("添加自定义服务商")
                 }
             }
 
             // ── Chat Settings ──
-            SettingsSection(title = "Chat") {
+            SettingsSection(title = "聊天") {
                 OutlinedTextField(
                     value = uiState.systemPrompt,
                     onValueChange = viewModel::setSystemPrompt,
-                    label = { Text("System Prompt") },
+                    label = { Text("系统提示词") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     minLines = 3,
@@ -192,8 +192,8 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 ToggleRow(
-                    title = "Streaming responses",
-                    subtitle = "Show tokens as they arrive",
+                    title = "流式响应",
+                    subtitle = "逐字显示回复内容",
                     checked = uiState.streamingEnabled,
                     onCheckedChange = viewModel::setStreamingEnabled
                 )
@@ -201,8 +201,8 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 ToggleRow(
-                    title = "Dark theme",
-                    subtitle = "Override the system setting",
+                    title = "深色主题",
+                    subtitle = "覆盖系统设置",
                     checked = uiState.darkMode,
                     onCheckedChange = viewModel::setDarkMode
                 )
@@ -215,7 +215,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            "Temperature",
+                        "温度",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium
                         )
@@ -240,12 +240,12 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            "Precise",
+                            "精确",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            "Creative",
+                            "创意",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -259,7 +259,7 @@ fun SettingsScreen(
                     onValueChange = { value ->
                         value.toIntOrNull()?.let { viewModel.setMaxTokens(it.coerceIn(1, 32768)) }
                     },
-                    label = { Text("Max Tokens") },
+                    label = { Text("最大 Token 数") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -268,21 +268,21 @@ fun SettingsScreen(
             }
 
             // ── About ──
-            SettingsSection(title = "About") {
+            SettingsSection(title = "关于") {
                 Text(
-                    text = "Aetheris AI v1.0.0",
+                    text = "Hermes AI v1.0.0",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "Your intelligent companion powered by the world's best AI models. Supports OpenAI, Anthropic, Groq, OpenRouter, and any number of custom OpenAI- or Anthropic-compatible endpoints.",
+                    text = "你的智能伙伴，由全球最先进的 AI 模型驱动。支持 OpenAI、Anthropic、Groq、OpenRouter 以及任意数量的 OpenAI 或 Anthropic 兼容的自定义服务商。",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             // ── Data Management ──
-            SettingsSection(title = "Data Management") {
+            SettingsSection(title = "数据管理") {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(
                         onClick = { showBackupDialog = true },
@@ -291,7 +291,7 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Default.Upload, null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Export")
+                        Text("导出")
                     }
                     OutlinedButton(
                         onClick = { showBackupDialog = false },
@@ -300,7 +300,7 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Default.Download, null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Import")
+                        Text("导入")
                     }
                 }
             }
@@ -368,8 +368,8 @@ fun SettingsScreen(
 }
 
 private fun ProviderType.displayName(): String = when (this) {
-    ProviderType.OPENAI_COMPATIBLE -> "OpenAI compatible"
-    ProviderType.ANTHROPIC -> "Anthropic compatible"
+    ProviderType.OPENAI_COMPATIBLE -> "OpenAI 兼容"
+    ProviderType.ANTHROPIC -> "Anthropic 兼容"
 }
 
 @Composable
@@ -402,19 +402,19 @@ private fun ProviderCard(
                         maxLines = 2
                     )
                     Text(
-                        text = "$models model${if (models == 1) "" else "s"} cached",
+                        text = "$models 个模型已缓存",
                         style = MaterialTheme.typography.labelSmall,
                         color = AetherisPrimary
                     )
                 }
                 if (onEdit != null) {
                     IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                        Icon(Icons.Default.Edit, contentDescription = "编辑")
                     }
                 }
                 if (onDelete != null) {
                     IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = ErrorRed)
+                        Icon(Icons.Default.Delete, contentDescription = "删除", tint = ErrorRed)
                     }
                 }
             }
@@ -441,7 +441,7 @@ private fun ProviderCard(
                     } else {
                         Icon(Icons.Default.Refresh, contentDescription = null)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Fetch models")
+                        Text("获取模型")
                     }
                 }
                 OutlinedButton(
@@ -450,7 +450,7 @@ private fun ProviderCard(
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Add model")
+                    Text("添加模型")
                 }
             }
         }
@@ -525,9 +525,9 @@ private fun ApiKeyInput(
     OutlinedTextField(
         value = key,
         onValueChange = { key = it },
-        label = { Text("$providerName API Key") },
+        label = { Text("$providerName API 密钥") },
         placeholder = {
-            Text(if (hasKey) "••••••••••••" else "Enter API key")
+            Text(if (hasKey) "••••••••••••" else "输入 API 密钥")
         },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -539,14 +539,14 @@ private fun ApiKeyInput(
                 IconButton(onClick = { isVisible = !isVisible }) {
                     Icon(
                         if (isVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = "Toggle visibility"
+                        contentDescription = "切换可见性"
                     )
                 }
                 if (key != currentKey && key.isNotBlank()) {
                     IconButton(onClick = { onSave(key) }) {
                         Icon(
                             Icons.Default.Check,
-                            contentDescription = "Save",
+                            contentDescription = "保存",
                             tint = SuccessGreen
                         )
                     }
@@ -554,7 +554,7 @@ private fun ApiKeyInput(
                     IconButton(onClick = onClear) {
                         Icon(
                             Icons.Default.Clear,
-                            contentDescription = "Remove key",
+                            contentDescription = "移除密钥",
                             tint = ErrorRed
                         )
                     }
@@ -588,14 +588,14 @@ private fun CustomProviderDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isEdit) "Edit custom provider" else "Add custom provider") },
+        title = { Text(if (isEdit) "编辑自定义服务商" else "添加自定义服务商") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
-                    placeholder = { Text("My Ollama, Local LLM, etc.") },
+                    label = { Text("名称") },
+                    placeholder = { Text("我的 Ollama, 本地 LLM 等") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -603,18 +603,18 @@ private fun CustomProviderDialog(
                 OutlinedTextField(
                     value = baseUrl,
                     onValueChange = { baseUrl = it },
-                    label = { Text("Base URL") },
+                    label = { Text("API 地址") },
                     placeholder = { Text("https://api.example.com") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 )
-                Text("API style", style = MaterialTheme.typography.labelLarge)
+                Text("API 类型", style = MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = type == ProviderType.OPENAI_COMPATIBLE,
                         onClick = { type = ProviderType.OPENAI_COMPATIBLE },
-                        label = { Text("OpenAI compatible") }
+                        label = { Text("OpenAI 兼容") }
                     )
                     FilterChip(
                         selected = type == ProviderType.ANTHROPIC,
@@ -625,7 +625,7 @@ private fun CustomProviderDialog(
                 OutlinedTextField(
                     value = key,
                     onValueChange = { key = it },
-                    label = { Text("API key (optional)") },
+                    label = { Text("API 密钥（可选）") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -638,11 +638,11 @@ private fun CustomProviderDialog(
                 onClick = { onConfirm(name, baseUrl, type, key) },
                 enabled = baseUrl.isNotBlank()
             ) {
-                Text(if (isEdit) "Save" else "Add")
+                Text(if (isEdit) "保存" else "添加")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text("取消") }
         }
     )
 }
@@ -658,13 +658,13 @@ private fun AddModelDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add model · $providerName") },
+        title = { Text("添加模型 · $providerName") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = modelId,
                     onValueChange = { modelId = it },
-                    label = { Text("Model ID") },
+                    label = { Text("模型 ID") },
                     placeholder = { Text("gpt-4o, claude-sonnet-4-20250514, llama3:70b…") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -673,7 +673,7 @@ private fun AddModelDialog(
                 OutlinedTextField(
                     value = displayName,
                     onValueChange = { displayName = it },
-                    label = { Text("Display name (optional)") },
+                    label = { Text("显示名称（可选）") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -684,9 +684,9 @@ private fun AddModelDialog(
             TextButton(
                 onClick = { onConfirm(modelId, displayName.ifBlank { null }) },
                 enabled = modelId.isNotBlank()
-            ) { Text("Add") }
+            ) { Text("添加") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
     )
 }
 
@@ -701,20 +701,20 @@ private fun BackupPasswordDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isExport) "Set Backup Password" else "Enter Backup Password") },
+        title = { Text(if (isExport) "设置备份密码" else "输入备份密码") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = if (isExport)
-                        "Your data will be encrypted with AES-256. Please remember this password; without it, you cannot restore your backup."
+                        "你的数据将使用 AES-256 加密。请记住这个密码；没有它你将无法恢复备份。"
                     else
-                        "Enter the password used to encrypt the backup file.",
+                        "请输入用于加密备份文件的密码。",
                     style = MaterialTheme.typography.bodySmall
                 )
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Password") },
+                    label = { Text("密码") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -725,7 +725,7 @@ private fun BackupPasswordDialog(
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
-                        label = { Text("Confirm Password") },
+                        label = { Text("确认密码") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
@@ -739,8 +739,8 @@ private fun BackupPasswordDialog(
             TextButton(
                 onClick = { onConfirm(password) },
                 enabled = password.isNotBlank() && (!isExport || password == confirmPassword)
-            ) { Text(if (isExport) "Export" else "Import") }
+            ) { Text(if (isExport) "导出" else "导入") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
     )
 }

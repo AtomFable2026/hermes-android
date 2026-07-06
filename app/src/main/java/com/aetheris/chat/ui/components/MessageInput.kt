@@ -30,7 +30,7 @@ fun MessageInput(
     onStop: () -> Unit,
     isLoading: Boolean,
     modifier: Modifier = Modifier,
-    placeholder: String = "Message Aetheris…"
+    placeholder: String = "给 Hermes 发消息…"
 ) {
     val canSend = value.isNotBlank() && !isLoading
 
@@ -45,15 +45,14 @@ fun MessageInput(
     )
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().imePadding(),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 8.dp,
         tonalElevation = 2.dp
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-                .imePadding(),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.Bottom
         ) {
             // Text input field
@@ -100,7 +99,7 @@ fun MessageInput(
             ) {
                 Icon(
                     imageVector = if (isLoading) Icons.Default.Stop else Icons.AutoMirrored.Filled.Send,
-                    contentDescription = if (isLoading) "Stop" else "Send",
+                    contentDescription = if (isLoading) "停止" else "发送",
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(20.dp)
                 )

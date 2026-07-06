@@ -35,10 +35,19 @@ fun ModelSelector(
 ) {
     var showSheet by remember { mutableStateOf(false) }
 
-    val provider = providers.find { it.id == selectedProviderId }
-        ?: providers.firstOrNull()
-    val model = provider?.models?.find { it.id == selectedModelId }
-        ?: provider?.models?.firstOrNull()
+    val provider = if (selectedProviderId.isNotBlank()) {
+        providers.find { it.id == selectedProviderId }
+    } else {
+        null  // 不自动回退，等 DataStore 加载
+    }
+    val model = if (selectedModelId.isNotBlank() && provider != null) {
+        provider.models.find { it.id == selectedModelId }
+    } else {
+        provider?.models?.firstOrNull()
+    }
+
+    val displayProvider = provider?.name ?: "选择服务商"
+    val displayModel = model?.name ?: (if (provider != null) "选择模型" else "")
 
     Surface(
         modifier = modifier
@@ -53,13 +62,13 @@ fun ModelSelector(
         ) {
             Column {
                 Text(
-                    text = provider?.name ?: "No provider",
+                    text = displayProvider,
                     style = MaterialTheme.typography.labelSmall,
                     color = AetherisPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = model?.name ?: "Select Model",
+                    text = displayModel,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -67,7 +76,7 @@ fun ModelSelector(
             Spacer(modifier = Modifier.width(4.dp))
             Icon(
                 imageVector = Icons.Default.ExpandMore,
-                contentDescription = "Change model",
+                contentDescription = "切换模型",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(18.dp)
             )
@@ -120,7 +129,7 @@ private fun ModelSelectorContent(
                 .padding(bottom = 16.dp)
         ) {
             Text(
-                text = "Choose a Model",
+                text = "选择模型",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
@@ -137,7 +146,7 @@ private fun ModelSelectorContent(
                     } else {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh model list",
+                            contentDescription = "刷新模型列表",
                             tint = AetherisPrimary
                         )
                     }
@@ -151,7 +160,7 @@ private fun ModelSelectorContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 12.dp),
-            placeholder = { Text("Search models...", style = MaterialTheme.typography.bodyMedium) },
+            placeholder = { Text("搜索模型...", style = MaterialTheme.typography.bodyMedium) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -204,9 +213,9 @@ private fun ModelSelectorContent(
 
         if (filteredModels.isEmpty()) {
             val emptyMsg = if (searchQuery.isNotBlank()) {
-                "No models match \"$searchQuery\""
+                "没有匹配 \"$searchQuery\" 的模型"
             } else {
-                "No models yet. Tap the refresh icon above to fetch models from this provider, or add one manually in Settings."
+                "暂无模型。点击上方的刷新图标从该服务商获取模型，或在设置中手动添加。"
             }
             Text(
                 text = emptyMsg,
@@ -268,7 +277,7 @@ private fun ModelItem(
             if (isSelected) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Selected",
+                    contentDescription = "已选",
                     tint = AetherisPrimary,
                     modifier = Modifier.size(20.dp)
                 )

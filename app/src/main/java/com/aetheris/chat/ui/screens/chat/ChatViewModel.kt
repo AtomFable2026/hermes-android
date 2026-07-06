@@ -19,9 +19,9 @@ data class ChatUiState(
     val inputText: String = "",
     val isLoading: Boolean = false,
     val conversationId: Long? = null,
-    val selectedProviderId: String = "openai",
-    val selectedModelId: String = "gpt-4o",
-    val systemPrompt: String = "You are Aetheris, a helpful, creative, and intelligent AI assistant.",
+    val selectedProviderId: String = "",
+    val selectedModelId: String = "",
+    val systemPrompt: String = "你是 Hermes，一个乐于助人、富有创造力的智能 AI 助手。",
     val streamingEnabled: Boolean = true,
     val temperature: Float = 0.7f,
     val maxTokens: Int = 4096,
@@ -158,7 +158,7 @@ class ChatViewModel @Inject constructor(
                 val errorMsg = ChatMessage(
                     conversationId = conversationId,
                     role = MessageRole.ASSISTANT,
-                    content = "⚠️ Please add your API key in Settings before chatting.",
+                    content = "⚠️ 请在设置中添加 API 密钥后再开始聊天。",
                     isError = true
                 )
                 chatRepository.saveMessage(errorMsg)
@@ -273,7 +273,7 @@ class ChatViewModel @Inject constructor(
                     _uiState.update { it.copy(isLoading = false) }
                 },
                 onFailure = { err ->
-                    val msg = err.localizedMessage ?: "Unknown error"
+                    val msg = err.localizedMessage ?: "未知错误"
                     chatRepository.updateMessageContent(assistantId, "⚠️ $msg")
                     _uiState.update { it.copy(isLoading = false, error = msg) }
                 }
@@ -317,7 +317,7 @@ class ChatViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     isRefreshingModels = false,
-                    info = result.getOrNull()?.let { count -> "Found $count models for ${provider.name}" },
+                    info = result.getOrNull()?.let { count -> "为 ${provider.name} 找到 $count 个模型" },
                     error = result.exceptionOrNull()?.localizedMessage
                 )
             }

@@ -1,19 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!--
-      Default: HTTPS only. Cleartext traffic is opt-in for the user-configured
-      custom provider via debuggable builds; production users routing to plain
-      HTTP must explicitly accept the risk on their own infrastructure.
-    -->
-    <base-config cleartextTrafficPermitted="false">
-        <trust-anchors>
-            <certificates src="system" />
-        </trust-anchors>
-    </base-config>
-    <debug-overrides>
+    <!-- Debug/Preview 版本放行明文（用于局域网连接桥接服务器） -->
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
             <certificates src="user" />
         </trust-anchors>
-    </debug-overrides>
+    </base-config>
 </network-security-config>

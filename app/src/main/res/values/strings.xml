@@ -1,51 +1,51 @@
 <resources>
-    <string name="app_name">Aetheris AI</string>
-    <string name="app_tagline">Your Intelligent Companion</string>
+    <string name="app_name">Hermes AI</string>
+    <string name="app_tagline">你的智能伙伴</string>
 
     <!-- Navigation -->
-    <string name="nav_chats">Chats</string>
-    <string name="nav_settings">Settings</string>
+    <string name="nav_chats">对话</string>
+    <string name="nav_settings">设置</string>
 
     <!-- Chat Screen -->
-    <string name="chat_input_hint">Message Aetheris…</string>
-    <string name="chat_send">Send</string>
-    <string name="chat_new">New Chat</string>
-    <string name="chat_delete">Delete Chat</string>
-    <string name="chat_empty_title">Start a Conversation</string>
-    <string name="chat_empty_subtitle">Ask anything — Aetheris is ready to help.</string>
+    <string name="chat_input_hint">给 Hermes 发消息…</string>
+    <string name="chat_send">发送</string>
+    <string name="chat_new">新建对话</string>
+    <string name="chat_delete">删除对话</string>
+    <string name="chat_empty_title">开始对话</string>
+    <string name="chat_empty_subtitle">随便问什么 — Hermes 随时准备帮忙。</string>
 
     <!-- Settings -->
-    <string name="settings_title">Settings</string>
-    <string name="settings_providers">AI Providers</string>
-    <string name="settings_api_key">API Key</string>
-    <string name="settings_api_key_hint">Enter your API key</string>
-    <string name="settings_base_url">Base URL</string>
-    <string name="settings_model">Default Model</string>
-    <string name="settings_system_prompt">System Prompt</string>
-    <string name="settings_system_prompt_hint">You are a helpful assistant.</string>
-    <string name="settings_theme">Theme</string>
-    <string name="settings_streaming">Enable Streaming</string>
-    <string name="settings_saved">Settings saved</string>
-    <string name="settings_about">About Aetheris AI</string>
-    <string name="settings_version">Version %s</string>
+    <string name="settings_title">设置</string>
+    <string name="settings_providers">AI 服务商</string>
+    <string name="settings_api_key">API 密钥</string>
+    <string name="settings_api_key_hint">输入你的 API 密钥</string>
+    <string name="settings_base_url">地址</string>
+    <string name="settings_model">默认模型</string>
+    <string name="settings_system_prompt">系统提示词</string>
+    <string name="settings_system_prompt_hint">你是一个有用的助手。</string>
+    <string name="settings_theme">主题</string>
+    <string name="settings_streaming">启用流式响应</string>
+    <string name="settings_saved">设置已保存</string>
+    <string name="settings_about">关于 Hermes AI</string>
+    <string name="settings_version">版本 %s</string>
 
     <!-- Providers -->
     <string name="provider_openai">OpenAI</string>
     <string name="provider_anthropic">Anthropic</string>
     <string name="provider_groq">Groq</string>
     <string name="provider_openrouter">OpenRouter</string>
-    <string name="provider_custom">Custom</string>
+    <string name="provider_custom">自定义</string>
 
     <!-- Errors -->
-    <string name="error_no_api_key">Please add your API key in Settings</string>
-    <string name="error_network">Network error. Check your connection.</string>
-    <string name="error_api">API error: %s</string>
-    <string name="error_rate_limit">Rate limit reached. Please wait.</string>
-    <string name="error_unknown">Something went wrong. Please try again.</string>
+    <string name="error_no_api_key">请在设置中添加 API 密钥</string>
+    <string name="error_network">网络错误。请检查连接。</string>
+    <string name="error_api">API 错误: %s</string>
+    <string name="error_rate_limit">请求频率已达上限。请稍候。</string>
+    <string name="error_unknown">出了点问题。请重试。</string>
 
     <!-- Dialogs -->
-    <string name="dialog_delete_title">Delete Conversation?</string>
-    <string name="dialog_delete_message">This action cannot be undone.</string>
-    <string name="dialog_confirm">Confirm</string>
-    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_delete_title">删除对话？</string>
+    <string name="dialog_delete_message">此操作不可撤销。</string>
+    <string name="dialog_confirm">确认</string>
+    <string name="dialog_cancel">取消</string>
 </resources>

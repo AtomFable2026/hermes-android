@@ -174,3 +174,6 @@ Issues and PRs are very welcome. If you're adding a feature, please:
 Crafted with care for people who love good software and good AI. ✦
 
 </div>
+
+---
+Auto-build enabled. Push code to trigger APK release.

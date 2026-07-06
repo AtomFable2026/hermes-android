@@ -9,6 +9,8 @@ import com.aetheris.chat.data.model.ProviderType
 import com.aetheris.chat.data.repository.BackupRepository
 import com.aetheris.chat.data.repository.ProvidersRepository
 import com.aetheris.chat.data.repository.SettingsRepository
+import com.aetheris.chat.data.repository.UpdateRepository
+import com.aetheris.chat.BuildConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -27,14 +29,19 @@ data class SettingsUiState(
     val darkMode: Boolean = true,
     val refreshingProviderId: String? = null,
     val saveMessage: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val hasUpdate: Boolean = false,
+    val updateUrl: String = "",
+    val isCheckingUpdate: Boolean = false,
+    val appVersion: String = BuildConfig.VERSION_NAME + BuildConfig.VERSION_NAME_SUFFIX
 )
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val providersRepository: ProvidersRepository,
-    private val backupRepository: BackupRepository
+    private val backupRepository: BackupRepository,
+    private val updateRepository: UpdateRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -213,5 +220,28 @@ class SettingsViewModel @Inject constructor(
 
     fun clearErrorMessage() {
         _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    fun checkForUpdate() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCheckingUpdate = true) }
+            val info = updateRepository.checkUpdate(BuildConfig.VERSION_NAME)
+            _uiState.update {
+                it.copy(
+                    isCheckingUpdate = false,
+                    hasUpdate = info.hasUpdate,
+                    updateUrl = info.downloadUrl.ifEmpty { info.releaseUrl },
+                    saveMessage = if (info.hasUpdate) "发现新版本: ${info.latestVersion}"
+                                 else "已是最新版本 (${info.currentVersion})"
+                )
+            }
+        }
+    }
+
+    fun openUpdatePage(context: android.content.Context) {
+        val url = _uiState.value.updateUrl
+        if (url.isNotBlank()) {
+            updateRepository.openDownloadPage(context, url)
+        }
     }
 }

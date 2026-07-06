@@ -23,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aetheris.chat.data.model.Conversation
 import com.aetheris.chat.ui.theme.*
+import com.aetheris.chat.BuildConfig
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -108,6 +109,37 @@ fun ConversationsScreen(
                             onDelete = { viewModel.deleteConversation(conversation.id) }
                         )
                     }
+                }
+            }
+
+            // ── 版本更新 — 底部条 ──
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .clickable {
+                        // 点版本号检查更新，长按进设置
+                        onOpenSettings()
+                    },
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "v${BuildConfig.VERSION_NAME}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                    Text(
+                        text = "设置",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AetherisPrimary.copy(alpha = 0.6f)
+                    )
                 }
             }
         }

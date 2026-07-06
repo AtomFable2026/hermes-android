@@ -305,6 +305,69 @@ fun SettingsScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ── Update ──
+            SettingsSection(title = "版本更新") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "当前版本: ${uiState.appVersion}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        if (uiState.hasUpdate) {
+                            Text(
+                                text = "有新版本可用!",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AetherisPrimary
+                            )
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            if (uiState.hasUpdate) {
+                                viewModel.openUpdatePage(context)
+                            } else {
+                                viewModel.checkForUpdate()
+                            }
+                        },
+                        enabled = !uiState.isCheckingUpdate,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (uiState.hasUpdate) AetherisPrimary
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        if (uiState.isCheckingUpdate) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+                        Text(
+                            if (uiState.isCheckingUpdate) "检查中..."
+                            else if (uiState.hasUpdate) "下载更新"
+                            else "检查更新"
+                        )
+                    }
+                }
+                // 有新版本时点击下载
+                if (uiState.hasUpdate && uiState.updateUrl.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "点「下载更新」在浏览器中打开下载页面",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
